@@ -8,7 +8,9 @@
     "@testing-library/user-event": "^7.1.2",
     "react": "^16.12.0",
     "react-dom": "^16.12.0",
-    "react-scripts": "3.3.0"
+    "react-scripts": "3.3.0",
+    "react-three-fiber": "^3.0.16",
+    "three": "^0.111.0"
   },
   "scripts": {
     "start": "react-scripts start",
@@ -18,6 +20,11 @@
   },
   "eslintConfig": {
     "extends": "react-app"
+  },
+  "prettier": {
+    "arrowParens": "avoid",
+    "trailingComma": "all",
+    "semi": false
   },
   "browserslist": {
     "production": [

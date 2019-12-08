@@ -1,12 +1,25 @@
-import React from 'react';
-import ReactDOM from 'react-dom';
-import './index.css';
-import App from './App';
-import * as serviceWorker from './serviceWorker';
+// @ts-check
+import React from "react"
+import ReactDOM from "react-dom"
+import { Canvas } from "react-three-fiber"
+import ThreeApp from "./three"
 
-ReactDOM.render(<App />, document.getElementById('root'));
+import "./index.css"
 
-// If you want your app to work offline and load faster, you can change
-// unregister() to register() below. Note this comes with some pitfalls.
-// Learn more about service workers: https://bit.ly/CRA-PWA
-serviceWorker.unregister();
+const App = () => {
+  const [zoom, setZoom] = React.useState(1)
+  const onWheel = React.useCallback(
+    (/** @type {MouseEvent} */ { deltaY }) => setZoom(z => z - deltaY / 15),
+    [],
+  )
+
+  return (
+    <div onWheel={onWheel}>
+      <Canvas orthographic>
+        <ThreeApp zoom={Math.exp(zoom)} />
+      </Canvas>
+    </div>
+  )
+}
+
+ReactDOM.render(<App />, document.getElementById("root"))
