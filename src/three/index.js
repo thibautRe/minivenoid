@@ -1,23 +1,20 @@
 // @ts-check
 import React from "react"
+import { a } from "react-spring/three"
 import Card from "./card"
 
-const cards = new Array(400).fill().map(() => ({
-  position: [(0.5 - Math.random()) * 10000, (0.5 - Math.random()) * 6000],
-  id: Math.random().toString(),
-}))
+const getScale = v => [Math.exp(v / 10), Math.exp(v / 10), 1]
 
-/**
- * @param {object} props
- * @param {number} zoom
- */
-const ThreeApp = ({ zoom }) => {
+const ThreeApp = ({ zoom, position, cards }) => {
   return (
-    <group scale={[zoom, zoom, 1]}>
+    <a.group
+      scale={zoom.interpolate(getScale)}
+      position={position.interpolate((x, y) => [x * 10, y * 10, 0])}
+    >
       {cards.map((card, index) => (
         <Card key={card.id} position={[...card.position, index * 1e-10]} />
       ))}
-    </group>
+    </a.group>
   )
 }
 

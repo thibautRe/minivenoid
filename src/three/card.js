@@ -23,7 +23,6 @@ const makeCardBufferGeometry = (width, height, borderRadius, bevel) =>
     ...(new Array(bevel).fill().map((_, index, arr) => {
       const prevAngle = index * Math.PI/(2*bevel)
       const angle = (index + 1) * Math.PI/(2*bevel)
-      console.log(index, bevel, arr.length);
       
       return [
         // bottom
