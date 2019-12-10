@@ -47,13 +47,24 @@ const makeCardBufferGeometry = (width, height, borderRadius, bevel) =>
 
   ])
 
-const cardBufferGeometry = makeCardBufferGeometry(120, 200, 10, 5)
+const cardBufferGeometry = makeCardBufferGeometry(120, 200, 10, 1)
+
+export const CardBufferGeometry = React.forwardRef((_, ref) => (
+  <bufferGeometry ref={ref} attach="geometry">
+    <bufferAttribute
+      attachObject={["attributes", "position"]}
+      count={cardBufferGeometry.length / 3}
+      array={cardBufferGeometry}
+      itemSize={3}
+    />
+  </bufferGeometry>
+))
 
 /**
  * @param {object} props
  * @param {[number, number, number]} props.position
  */
-const Card = ({ position }) => {
+const Card = ({ position, geometry, material, hoverMaterial }) => {
   const [isHover, setIsHover] = React.useState(false)
   return (
     <mesh
@@ -66,22 +77,10 @@ const Card = ({ position }) => {
         setIsHover(false)
       }}
       position={position}
-    >
-      <bufferGeometry attach="geometry">
-        <bufferAttribute
-          attachObject={["attributes", "position"]}
-          count={cardBufferGeometry.length / 3}
-          array={cardBufferGeometry}
-          itemSize={3}
-        />
-      </bufferGeometry>
-      <meshBasicMaterial
-        attach="material"
-        color="#222"
-        opacity={isHover ? 1 : 0.7}
-      />
-    </mesh>
+      geometry={geometry}
+      material={isHover ? hoverMaterial : material}
+    />
   )
 }
 
-export default Card
+export default React.memo(Card)
