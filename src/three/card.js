@@ -1,5 +1,6 @@
 // @ts-check
 import React from "react"
+import { useResource } from "react-three-fiber"
 
 /**
  * @param {number} width
@@ -49,38 +50,43 @@ const makeCardBufferGeometry = (width, height, borderRadius, bevel) =>
 
 const cardBufferGeometry = makeCardBufferGeometry(120, 200, 10, 1)
 
-export const CardBufferGeometry = React.forwardRef((_, ref) => (
-  <bufferGeometry ref={ref} attach="geometry">
-    <bufferAttribute
-      attachObject={["attributes", "position"]}
-      count={cardBufferGeometry.length / 3}
-      array={cardBufferGeometry}
-      itemSize={3}
-    />
-  </bufferGeometry>
-))
-
-/**
- * @param {object} props
- * @param {[number, number, number]} props.position
- */
-const Card = ({ position, geometry, material, hoverMaterial }) => {
-  const [isHover, setIsHover] = React.useState(false)
+const Card = React.memo(({ card, cardIndex, geometry, material }) => {
   return (
     <mesh
-      onPointerOver={e => {
-        e.stopPropagation()
-        setIsHover(true)
-      }}
-      onPointerOut={e => {
-        e.stopPropagation()
-        setIsHover(false)
-      }}
-      position={position}
+      position={[...card.position, cardIndex * 1e-10]}
       geometry={geometry}
-      material={isHover ? hoverMaterial : material}
+      material={material}
     />
   )
-}
+})
 
-export default React.memo(Card)
+/**
+ * Group of cards - also takes care of declaring reused materials and geometries
+ */
+export const Cards = ({ cards }) => {
+  const [cardRef, cardGeometry] = useResource()
+  const [cardMaterialRef, cardMaterial] = useResource()
+
+  return (
+    <>
+      <bufferGeometry ref={cardRef}>
+        <bufferAttribute
+          attachObject={["attributes", "position"]}
+          count={cardBufferGeometry.length / 3}
+          array={cardBufferGeometry}
+          itemSize={3}
+        />
+      </bufferGeometry>
+      <meshBasicMaterial ref={cardMaterialRef} color="#222" opacity={0.7} />
+      {cards.map((card, index) => (
+        <Card
+          key={card.id}
+          card={card}
+          cardIndex={index}
+          geometry={cardGeometry}
+          material={cardMaterial}
+        />
+      ))}
+    </>
+  )
+}

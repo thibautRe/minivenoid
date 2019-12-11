@@ -3,11 +3,12 @@ import React from "react"
 import ReactDOM from "react-dom"
 import { Canvas } from "react-three-fiber"
 import { useSpring } from "react-spring/three"
+import { useGesture } from "react-use-gesture"
 
 import ThreeApp from "./three"
+import { getPixelDensityForZoom } from "./utils"
 
 import "./index.css"
-import { useGesture } from "react-use-gesture"
 
 const AMOUNT = 10000
 const cards = new Array(AMOUNT).fill().map(() => ({
@@ -18,13 +19,9 @@ const cards = new Array(AMOUNT).fill().map(() => ({
   id: Math.random().toString(),
 }))
 
-const getPixelDensityForZoom = zoom => 2 ** zoom
-
 const App = () => {
-  const [{ zoom, position }, set] = useSpring(() => ({
-    zoom: -1,
-    position: [0, 0],
-  }))
+  const [{ zoom }, setZoom] = useSpring(() => ({ zoom: -1 }))
+  const [{ position }, setPosition] = useSpring(() => ({ position: [0, 0] }))
 
   const bindEvents = useGesture({
     onWheel: ({ event, xy: [x, y] }) => {
@@ -37,17 +34,33 @@ const App = () => {
         delta /= 50
       }
 
-      set({ zoom: delta })
+      setZoom({ zoom: delta })
     },
-    onDrag: ({ down, last, delta: [mx, my] }) => {
-      if (!down || last) return
-      const [x, y] = position.getValue()
-      const pixelDensity = getPixelDensityForZoom(zoom.getValue())
-      console.log(x + mx * pixelDensity)
+    onDrag: ({ buttons, active, movement, direction, velocity, memo }) => {
+      // only allow the wheel to drag the canvas
+      /** @see https://developer.mozilla.org/fr/docs/Web/API/MouseEvent/buttons */
+      if (buttons !== 4) {
+        return
+      }
 
-      set({
-        position: [x + mx * pixelDensity, y - my * pixelDensity],
+      // Initialize the memo
+      if (!memo) {
+        memo = position.getValue()
+      }
+
+      const pixelDensity = getPixelDensityForZoom(zoom.getValue())
+
+      setPosition({
+        position: movement.map((m, i) => m * pixelDensity + memo[i]),
+        immediate: active,
+        config: {
+          velocity: direction.map(d => d * velocity),
+          decay: true,
+          friction: 10,
+          tension: 409,
+        },
       })
+      return memo
     },
   })
 
