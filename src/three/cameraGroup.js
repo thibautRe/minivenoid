@@ -2,8 +2,8 @@
 import React from "react"
 import { a, interpolate } from "react-spring/three"
 
-import { Cards } from "./card"
 import { getPixelDensityForZoom } from "../utils"
+import { useView } from "./view"
 
 /**
  * @param {number} z
@@ -14,7 +14,8 @@ const getScale = z => [
   1,
 ]
 
-const ThreeApp = ({ zoom, position, cards }) => {
+const CameraGroup = ({ children }) => {
+  const { zoom, position } = useView()
   return (
     <a.group
       position={interpolate([zoom, position], (z, [x, y]) => [
@@ -24,9 +25,9 @@ const ThreeApp = ({ zoom, position, cards }) => {
       ])}
       scale={zoom.interpolate(getScale)}
     >
-      <Cards cards={cards} />
+      {children}
     </a.group>
   )
 }
 
-export default ThreeApp
+export default CameraGroup
