@@ -5,9 +5,7 @@ import { a, interpolate } from "react-spring/three"
 import { getPixelDensityForZoom } from "../utils"
 import { useView } from "./view"
 
-/**
- * @param {number} z
- **/
+/** @param {number} z */
 const getScale = z => [
   1 / getPixelDensityForZoom(z),
   1 / getPixelDensityForZoom(z),
