@@ -1,9 +1,9 @@
 // @ts-check
 import React from "react"
 import { useResource } from "react-three-fiber"
-import { useDrag } from "react-use-gesture"
+import { useDrag, useGesture } from "react-use-gesture"
 import { useZoom } from "./view"
-import { getPixelDensityForZoom } from "../utils"
+import { getPixelDensityForZoom, setCursor } from "../utils"
 
 /**
  * @param {number} width
@@ -53,7 +53,7 @@ const makeCardBufferGeometry = (width, height, borderRadius, bevel) =>
 
 const cardBufferGeometry = makeCardBufferGeometry(120, 200, 10, 8)
 
-const Card = React.memo(function Card({
+const Card = React.memo(function CardMemo({
   card,
   cardIndex,
   geometry,
@@ -61,21 +61,37 @@ const Card = React.memo(function Card({
   onMoveCard,
 }) {
   const zoom = useZoom()
-  const bind = useDrag(
-    ({ buttons, active, movement: [mx, my], memo }) => {
-      // Only allow left-click drags
-      if (buttons !== 1) {
-        return
-      }
-      if (!memo) {
-        memo = card.position
-      }
-      const pixelDensity = getPixelDensityForZoom(zoom.getValue())
-      onMoveCard({
-        id: card.id,
-        position: [memo[0] + mx * pixelDensity, memo[1] - my * pixelDensity],
-      })
-      return memo
+  const bind = useGesture(
+    {
+      onPointerEnter: ({ buttons }) => {
+        if (buttons) return
+        setCursor("grab")
+      },
+      onPointerLeave: ({ buttons, button }) => {
+        if (buttons) return
+        setCursor()
+      },
+      onDragStart: () => {
+        setCursor("grabbing")
+      },
+      onDragEnd: () => {
+        setCursor("grab")
+      },
+      onDrag: ({ buttons, active, movement: [mx, my], memo }) => {
+        // Only allow left-click drags
+        if (buttons !== 1) {
+          return
+        }
+        if (!memo) {
+          memo = card.position
+        }
+        const pixelDensity = getPixelDensityForZoom(zoom.getValue())
+        onMoveCard({
+          id: card.id,
+          position: [memo[0] + mx * pixelDensity, memo[1] - my * pixelDensity],
+        })
+        return memo
+      },
     },
     { pointerEvents: true },
   )
