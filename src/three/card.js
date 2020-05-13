@@ -24,7 +24,7 @@ const makeCardBufferGeometry = (width, height, borderRadius, bevel) =>
     width, height - borderRadius, 0,
 
     // different bevel levels
-    ...(new Array(bevel).fill(undefined).map((_, index, arr) => {
+    ...(new Array(bevel).fill(0).map((_, index, arr) => {
       const prevAngle = index * Math.PI/(2*bevel)
       const angle = (index + 1) * Math.PI/(2*bevel)
       
@@ -53,41 +53,43 @@ const makeCardBufferGeometry = (width, height, borderRadius, bevel) =>
 
 const cardBufferGeometry = makeCardBufferGeometry(120, 200, 10, 8)
 
-const Card = React.memo(
-  ({ card, cardIndex, geometry, material, onMoveCard }) => {
-    const zoom = useZoom()
-    const bind = useDrag(
-      ({ buttons, active, movement: [mx, my], memo }) => {
-        // Only allow left-click drags
-        if (buttons !== 1) {
-          return
-        }
-        if (!memo) {
-          memo = card.position
-        }
-        const pixelDensity = getPixelDensityForZoom(zoom.getValue())
-        onMoveCard({
-          id: card.id,
-          position: [memo[0] + mx * pixelDensity, memo[1] - my * pixelDensity],
-        })
-        return memo
-      },
-      { pointerEvents: true },
-    )
-    return (
-      <mesh
-        position={[...card.position, cardIndex * 1e-10]}
-        geometry={geometry}
-        material={material}
-        {...bind()}
-      />
-    )
-  },
-)
+const Card = React.memo(function Card({
+  card,
+  cardIndex,
+  geometry,
+  material,
+  onMoveCard,
+}) {
+  const zoom = useZoom()
+  const bind = useDrag(
+    ({ buttons, active, movement: [mx, my], memo }) => {
+      // Only allow left-click drags
+      if (buttons !== 1) {
+        return
+      }
+      if (!memo) {
+        memo = card.position
+      }
+      const pixelDensity = getPixelDensityForZoom(zoom.getValue())
+      onMoveCard({
+        id: card.id,
+        position: [memo[0] + mx * pixelDensity, memo[1] - my * pixelDensity],
+      })
+      return memo
+    },
+    { pointerEvents: true },
+  )
+  return (
+    <mesh
+      position={[...card.position, cardIndex * 1e-10]}
+      geometry={geometry}
+      material={material}
+      {...bind()}
+    />
+  )
+})
 
-/**
- * Group of cards - also takes care of declaring reused materials and geometries
- */
+/** Group of cards - also takes care of declaring reused materials and geometries */
 export const Cards = ({ cards, ...props }) => {
   const [cardRef, cardGeometry] = useResource()
   const [cardMaterialRef, cardMaterial] = useResource()

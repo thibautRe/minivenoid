@@ -8,22 +8,44 @@ import { useGesture } from "react-use-gesture"
 import CameraGroup from "./three/cameraGroup"
 import { ViewProvider } from "./three/view"
 import { Cards } from "./three/card"
+import { Connections } from "./three/connections"
 import { getPixelDensityForZoom } from "./utils"
 
 import "./index.css"
 
-const generateCards = (AMOUNT = 5000) =>
-  new Array(AMOUNT).fill(undefined).map(() => ({
+const urlParams = new URLSearchParams(window.location.search)
+
+const MAX_CARDS = parseInt(urlParams.get("amt")) || 500
+const MAX_CONNECTIONS = 200
+
+const generateModel = (amt = MAX_CARDS, amtConn = MAX_CONNECTIONS) => {
+  const cards = new Array(amt).fill(undefined).map(() => ({
     position: [
-      (0.5 - Math.random()) * Math.sqrt(AMOUNT) * 850,
-      (0.5 - Math.random()) * Math.sqrt(AMOUNT) * 600,
+      (0.5 - Math.random()) * Math.sqrt(amt) * 850,
+      (0.5 - Math.random()) * Math.sqrt(amt) * 600,
     ],
     id: Math.random().toString(),
   }))
 
+  const connections = new Array(amtConn).fill(0).map(() => {
+    const ranId = Math.max(0, Math.floor(Math.random() * cards.length - 1))
+    return {
+      id: Math.random().toString(),
+      from: cards[ranId].id,
+      to: cards[ranId + 1].id,
+    }
+  })
+
+  return { cards, connections }
+}
+
+const model = generateModel()
+
 const App = () => {
   const domTarget = React.useRef(null)
-  const [cards, setCards] = React.useState(generateCards)
+  const [cards, setCards] = React.useState(model.cards)
+  const [connections, setConnections] = React.useState(model.connections)
+
   const [{ zoom, position }, setZoomPos] = useSpring(() => ({
     zoom: -1,
     position: [0, 0],
@@ -40,7 +62,6 @@ const App = () => {
 
         const mult = pixelDensity * deltaModeMultiplyer
         const position = [-x * mult, -y * mult]
-        console.log(position)
         setZoomPos({ position })
       },
       onPinch: ({ event, da: [d], origin }) => {
@@ -61,8 +82,6 @@ const App = () => {
         //     currentY + pd * (y - winY / 2),
         //   ]
         // }
-
-        console.log(zoom)
 
         setZoomPos({ zoom })
       },
@@ -124,6 +143,7 @@ const App = () => {
       <Canvas orthographic>
         <ViewProvider zoom={zoom} position={position}>
           <CameraGroup>
+            <Connections cards={cards} connections={connections} />
             <Cards cards={cards} onMoveCard={onMoveCard} />
           </CameraGroup>
         </ViewProvider>
