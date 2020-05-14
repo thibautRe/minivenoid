@@ -51,7 +51,7 @@ const makeCardBufferGeometry = (width, height, borderRadius, bevel) =>
 
   ])
 
-const cardBufferGeometry = makeCardBufferGeometry(120, 200, 10, 8)
+const cardBufferGeometry = makeCardBufferGeometry(120, 200, 10, 4)
 
 const Card = React.memo(function CardMemo({
   card,
@@ -88,7 +88,7 @@ const Card = React.memo(function CardMemo({
         const pixelDensity = getPixelDensityForZoom(zoom.getValue())
         onMoveCard({
           id: card.id,
-          position: [memo[0] + mx * pixelDensity, memo[1] - my * pixelDensity],
+          position: [memo[0] + mx / pixelDensity, memo[1] - my / pixelDensity],
         })
         return memo
       },

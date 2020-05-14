@@ -5,10 +5,10 @@ import { Canvas } from "react-three-fiber"
 import { useSpring } from "react-spring/three"
 import { useGesture } from "react-use-gesture"
 
-import CameraGroup from "./three/cameraGroup"
 import { ViewProvider } from "./three/view"
 import { Cards } from "./three/card"
 import { Connections } from "./three/connections"
+import { Camera } from "./three/camera"
 import { getPixelDensityForZoom } from "./utils"
 
 import "./index.css"
@@ -21,8 +21,8 @@ const MAX_CONNECTIONS = 200
 const generateModel = (amt = MAX_CARDS, amtConn = MAX_CONNECTIONS) => {
   const cards = new Array(amt).fill(undefined).map(() => ({
     position: [
-      (0.5 - Math.random()) * Math.sqrt(amt) * 850,
-      (0.5 - Math.random()) * Math.sqrt(amt) * 600,
+      (0.5 - Math.random()) * Math.sqrt(amt) * 200,
+      (0.5 - Math.random()) * Math.sqrt(amt) * 150,
     ],
     id: Math.random().toString(),
   }))
@@ -47,7 +47,7 @@ const App = () => {
   const [connections, setConnections] = React.useState(model.connections)
 
   const [{ zoom, position }, setZoomPos] = useSpring(() => ({
-    zoom: -1,
+    zoom: 0,
     position: [0, 0],
   }))
 
@@ -61,14 +61,14 @@ const App = () => {
         const deltaModeMultiplyer = event.deltaMode === 0x00 ? 1 : 50
 
         const mult = pixelDensity * deltaModeMultiplyer
-        const position = [-x * mult, -y * mult]
+        const position = [x * mult, y * mult]
         setZoomPos({ position })
       },
       onPinch: ({ event, da: [d], origin }) => {
         if (!event) return
 
         // sensitivity fix
-        const zoom = -d / 50
+        const zoom = d / 50
 
         // let newPosition
         // if (origin) {
@@ -140,12 +140,11 @@ const App = () => {
 
   return (
     <div ref={domTarget}>
-      <Canvas orthographic>
+      <Canvas>
         <ViewProvider zoom={zoom} position={position}>
-          <CameraGroup>
-            <Connections cards={cards} connections={connections} />
-            <Cards cards={cards} onMoveCard={onMoveCard} />
-          </CameraGroup>
+          <Camera />
+          <Connections cards={cards} connections={connections} />
+          <Cards cards={cards} onMoveCard={onMoveCard} />
         </ViewProvider>
       </Canvas>
     </div>
