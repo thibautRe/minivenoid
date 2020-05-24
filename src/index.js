@@ -53,16 +53,39 @@ const App = () => {
 
   const bindEvents = useGesture(
     {
-      onWheel: ({ event, xy: [x, y] }) => {
+      onWheel: ({
+        event,
+        movement,
+        memo,
+        active,
+        velocity,
+        ...props
+      }) => {
         if (!event) return
-        const pixelDensity = getPixelDensityForZoom(zoom.getValue())
 
         /** @see https://developer.mozilla.org/en-US/docs/Web/API/WheelEvent/deltaMode */
         const deltaModeMultiplyer = event.deltaMode === 0x00 ? 1 : 50
 
-        const mult = pixelDensity * deltaModeMultiplyer
-        const position = [x * mult, y * mult]
-        setZoomPos({ position })
+        // Initialize the memo
+        if (!memo) {
+          memo = position.getValue()
+        }
+
+        const pixelDensity = getPixelDensityForZoom(zoom.getValue())
+
+        console.log(props.wheeling, props)
+
+        setZoomPos({
+          position: movement.map(
+            (m, i) => m * pixelDensity * deltaModeMultiplyer + memo[i],
+          ),
+          immediate: active,
+          config: {
+            velocity,
+          },
+        })
+
+        return memo
       },
       onPinch: ({ event, da: [d], origin }) => {
         if (!event) return

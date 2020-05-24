@@ -4,7 +4,7 @@ import { a, interpolate } from "react-spring/three"
 import { useView } from "./view"
 import { getPixelDensityForZoom } from "../utils"
 
-export const Camera = ({ children, makeDefault = true, ...props }) => {
+export const Camera = ({ makeDefault = true, ...props }) => {
   const { setDefaultCamera, camera, size } = useThree()
   const { zoom, position } = useView()
   const cameraRef = React.useRef(null)
@@ -14,12 +14,12 @@ export const Camera = ({ children, makeDefault = true, ...props }) => {
   })
 
   React.useLayoutEffect(() => {
-    if (makeDefault) {
+    if (makeDefault && camera !== cameraRef.current) {
       const oldCam = camera
       setDefaultCamera(cameraRef.current)
       return () => setDefaultCamera(oldCam)
     }
-  }, [makeDefault, setDefaultCamera])
+  }, [makeDefault, setDefaultCamera, camera])
 
   return (
     <a.orthographicCamera
@@ -35,8 +35,6 @@ export const Camera = ({ children, makeDefault = true, ...props }) => {
       ])}
       zoom={zoom.interpolate(getPixelDensityForZoom)}
       {...props}
-    >
-      {children}
-    </a.orthographicCamera>
+    />
   )
 }

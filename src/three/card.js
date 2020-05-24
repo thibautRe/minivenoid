@@ -1,7 +1,7 @@
 // @ts-check
 import React from "react"
 import { useResource } from "react-three-fiber"
-import { useDrag, useGesture } from "react-use-gesture"
+import { useGesture } from "react-use-gesture"
 import { useZoom } from "./view"
 import { getPixelDensityForZoom, setCursor } from "../utils"
 
