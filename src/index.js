@@ -21,8 +21,8 @@ const MAX_CONNECTIONS = 200
 const generateModel = (amt = MAX_CARDS, amtConn = MAX_CONNECTIONS) => {
   const cards = new Array(amt).fill(undefined).map(() => ({
     position: [
-      (0.5 - Math.random()) * Math.sqrt(amt) * 200,
-      (0.5 - Math.random()) * Math.sqrt(amt) * 150,
+      (0.5 - Math.random()) * Math.sqrt(amt) * 500,
+      (0.5 - Math.random()) * Math.sqrt(amt) * 400,
     ],
     id: Math.random().toString(),
   }))
@@ -47,18 +47,16 @@ const App = () => {
   // eslint-disable-next-line no-unused-vars
   const [connections, setConnections] = React.useState(model.connections)
 
-  const [{ zoom, position }, setZoomPos] = useSpring(() => ({
-    zoom: 0,
-    position: [0, 0],
-  }))
+  const [{ zoom }, setZoom] = useSpring(() => ({ zoom: 0 }))
+  const [{ position }, setPosition] = useSpring(() => ({ position: [0, 0] }))
 
   const bindEvents = useGesture(
     {
-      onWheel: ({ event, movement, memo, active, velocity, ...props }) => {
+      onWheel: ({ event, movement, memo, active }) => {
         if (!event) return
 
         /** @see https://developer.mozilla.org/en-US/docs/Web/API/WheelEvent/deltaMode */
-        const deltaModeMultiplyer = event.deltaMode === 0x00 ? 1 : 50
+        const deltaModeMultiplier = event.deltaMode === 0x00 ? 1 : 50
 
         // Initialize the memo
         if (!memo) {
@@ -67,38 +65,19 @@ const App = () => {
 
         const pixelDensity = getPixelDensityForZoom(zoom.getValue())
 
-        setZoomPos({
+        setPosition({
           position: movement.map(
-            (m, i) => m / pixelDensity * deltaModeMultiplyer + memo[i],
+            (m, i) => (m / pixelDensity) * deltaModeMultiplier + memo[i],
           ),
           immediate: active,
-          config: {
-            velocity,
-          },
         })
 
         return memo
       },
-      onPinch: ({ event, da: [d], origin }) => {
-        if (!event) return
-
+      onPinch: ({ da: [d] }) => {
         // sensitivity fix
         const zoom = d / 50
-
-        // let newPosition
-        // if (origin) {
-        //   const [x, y] = origin
-        //   const [currentX, currentY] = position.getValue()
-        //   const pd = getPixelDensityForZoom(zoom)
-        //   // assumes the canvas is full screen
-        //   const [winX, winY] = [window.innerWidth, window.innerHeight]
-        //   newPosition = [
-        //     currentX + pd * (x - winX / 2),
-        //     currentY + pd * (y - winY / 2),
-        //   ]
-        // }
-
-        setZoomPos({ zoom })
+        setZoom({ zoom })
       },
       onDrag: ({ buttons, active, movement, direction, velocity, memo }) => {
         // only allow the wheel to drag the canvas
@@ -114,14 +93,11 @@ const App = () => {
 
         const pixelDensity = getPixelDensityForZoom(zoom.getValue())
 
-        setZoomPos({
+        setPosition({
           position: movement.map((m, i) => m * pixelDensity + memo[i]),
           immediate: active,
           config: {
             velocity: direction.map(d => d * velocity),
-            decay: true,
-            friction: 10,
-            tension: 409,
           },
         })
         return memo
