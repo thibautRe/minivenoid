@@ -1,6 +1,6 @@
 import React from "react"
 import { useThree, useFrame } from "react-three-fiber"
-import { a, interpolate } from "react-spring/three"
+import { a } from "react-spring/three"
 import { useView } from "./view"
 import { getPixelDensityForZoom } from "../utils"
 
@@ -14,12 +14,13 @@ export const Camera = ({ makeDefault = true, ...props }) => {
   })
 
   React.useLayoutEffect(() => {
-    if (makeDefault && camera !== cameraRef.current) {
+    if (makeDefault) {
       const oldCam = camera
       setDefaultCamera(cameraRef.current)
       return () => setDefaultCamera(oldCam)
     }
-  }, [makeDefault, setDefaultCamera, camera])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [makeDefault, setDefaultCamera])
 
   return (
     <a.orthographicCamera
@@ -28,11 +29,7 @@ export const Camera = ({ makeDefault = true, ...props }) => {
       right={size.width / 2}
       top={size.height / 2}
       bottom={size.height / -2}
-      position={interpolate([zoom, position], (z, [x, y]) => [
-        x / getPixelDensityForZoom(z),
-        -y / getPixelDensityForZoom(z),
-        5, // altitude
-      ])}
+      position={position.interpolate((x, y) => [x, -y, 5])}
       zoom={zoom.interpolate(getPixelDensityForZoom)}
       {...props}
     />

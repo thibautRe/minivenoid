@@ -44,6 +44,7 @@ const model = generateModel()
 const App = () => {
   const domTarget = React.useRef(null)
   const [cards, setCards] = React.useState(model.cards)
+  // eslint-disable-next-line no-unused-vars
   const [connections, setConnections] = React.useState(model.connections)
 
   const [{ zoom, position }, setZoomPos] = useSpring(() => ({
@@ -53,14 +54,7 @@ const App = () => {
 
   const bindEvents = useGesture(
     {
-      onWheel: ({
-        event,
-        movement,
-        memo,
-        active,
-        velocity,
-        ...props
-      }) => {
+      onWheel: ({ event, movement, memo, active, velocity, ...props }) => {
         if (!event) return
 
         /** @see https://developer.mozilla.org/en-US/docs/Web/API/WheelEvent/deltaMode */
@@ -73,11 +67,9 @@ const App = () => {
 
         const pixelDensity = getPixelDensityForZoom(zoom.getValue())
 
-        console.log(props.wheeling, props)
-
         setZoomPos({
           position: movement.map(
-            (m, i) => m * pixelDensity * deltaModeMultiplyer + memo[i],
+            (m, i) => m / pixelDensity * deltaModeMultiplyer + memo[i],
           ),
           immediate: active,
           config: {
