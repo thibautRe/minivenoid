@@ -1,0 +1,1 @@
+{"version":3,"sources":["index.css"],"names":[],"mappings":"AAAA,UAEE,QAAS,CACT,SACF,CAEA,OACE,WAAY,CACZ,YACF","file":"main.f3c720d6.chunk.css","sourcesContent":["html,\nbody {\n  margin: 0;\n  padding: 0;\n}\n\ncanvas {\n  width: 100vw;\n  height: 100vh;\n}\n"]}
