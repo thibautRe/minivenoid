@@ -5,7 +5,6 @@ const Connection = React.memo(function Connection({
   fromPosition,
   toPosition,
 }) {
-  const geomRef = React.useRef(null)
   // prettier-ignore
   const connectionBufferGeom = new Float32Array([
     ...fromPosition, 0,
@@ -19,11 +18,11 @@ const Connection = React.memo(function Connection({
     [fromPosition, toPosition],
   )
 
-  console.log("connection update");
+  console.log("connection update")
 
   return (
     <line>
-      <bufferGeometry ref={geomRef} attach="geometry">
+      <bufferGeometry>
         <bufferAttribute
           ref={attributeRef}
           attachObject={["attributes", "position"]}
@@ -32,21 +31,17 @@ const Connection = React.memo(function Connection({
           itemSize={3}
         />
       </bufferGeometry>
-      <lineBasicMaterial attach="material" color="#999" />
+      <lineBasicMaterial color="#999" />
     </line>
   )
 })
 
 export const Connections = ({ connections, cards }) => {
-  return (
-    <>
-      {connections.map(conn => (
-        <Connection
-          key={conn.id}
-          fromPosition={cards[conn.from].position}
-          toPosition={cards[conn.to].position}
-        />
-      ))}
-    </>
-  )
+  return connections.map(conn => (
+    <Connection
+      key={conn.id}
+      fromPosition={cards[conn.from].position}
+      toPosition={cards[conn.to].position}
+    />
+  ))
 }
