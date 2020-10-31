@@ -15,14 +15,15 @@ import "./index.css"
 
 const urlParams = new URLSearchParams(window.location.search)
 
-const MAX_CARDS = parseInt(urlParams.get("amt")) || 500
-const MAX_CONNECTIONS = 200
+const MAX_CARDS = parseInt(urlParams.get("amt")) || 5
+const MAX_CONNECTIONS = 2
 
 const generateModel = (amt = MAX_CARDS, amtConn = MAX_CONNECTIONS) => {
-  const cards = new Array(amt).fill(undefined).map(() => ({
+  const cards = new Array(amt).fill(undefined).map((_, i) => ({
     position: [
       (0.5 - Math.random()) * Math.sqrt(amt) * 500,
       (0.5 - Math.random()) * Math.sqrt(amt) * 400,
+      i * 1e-10,
     ],
     id: Math.random().toString(),
   }))
@@ -55,7 +56,7 @@ const App = () => {
   const [{ zoom }, setZoom] = useSpring(() => ({ zoom: 0 }))
   const [{ position }, setPosition] = useSpring(() => ({ position: [0, 0] }))
 
-  const bindEvents = useGesture(
+  useGesture(
     {
       onWheel: ({ event, movement, memo, active }) => {
         if (!event) return
@@ -79,7 +80,8 @@ const App = () => {
 
         return memo
       },
-      onPinch: ({ da: [d] }) => {
+      onPinch: ({ event, da: [d] }) => {
+        event.preventDefault()
         // sensitivity fix
         const zoom = d / 50
         setZoom({ zoom })
@@ -108,13 +110,8 @@ const App = () => {
         return memo
       },
     },
-    {
-      domTarget,
-      event: { passive: false }, // needed for pinch events
-    },
+    { domTarget, eventOptions: { passive: false } },
   )
-
-  React.useEffect(bindEvents, [bindEvents])
 
   const onChangeCard = React.useCallback((id, action) => {
     setCardsMap(cards => ({ ...cards, [id]: action(cards[id]) }))
