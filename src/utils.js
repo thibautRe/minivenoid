@@ -18,6 +18,9 @@ export const setCursor = cursor => {
   }
 }
 
+const pToGrid = p => Math.round(p / 50) * 50
+export const positionToGrid = pos => [pToGrid(pos[0]), pToGrid(pos[1]), pos[2]]
+
 /**
  * Unit square of 1 by 1
  */

@@ -9,7 +9,7 @@ import { ViewProvider } from "./three/view"
 import { Cards } from "./three/card"
 import { Connections } from "./three/connections"
 import { Camera } from "./three/camera"
-import { getPixelDensityForZoom } from "./utils"
+import { getPixelDensityForZoom, positionToGrid } from "./utils"
 
 import "./index.css"
 
@@ -20,12 +20,13 @@ const MAX_CONNECTIONS = 200
 
 const generateModel = (amt = MAX_CARDS, amtConn = MAX_CONNECTIONS) => {
   const cards = new Array(amt).fill(undefined).map((_, i) => ({
-    position: [
+    position: positionToGrid([
       (0.5 - Math.random()) * Math.sqrt(amt) * 500,
       (0.5 - Math.random()) * Math.sqrt(amt) * 400,
       i * 1e-10,
-    ],
+    ]),
     height: (0.5 + Math.random()) * 200,
+    width: 120,
     id: Math.random().toString(),
   }))
 

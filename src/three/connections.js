@@ -41,11 +41,15 @@ export const makeThickLineGeometry = (from, to, width) => {
   ])
 }
 
-const Connection = React.memo(function Connection({ from, to }) {
+const Connection = React.memo(function Connection({ fromCard, toCard }) {
   const zoom = useZoom()
   const { f, t } = useSpring({
-    f: from,
-    t: to,
+    f: [
+      fromCard.position[0] + fromCard.width,
+      fromCard.position[1] + fromCard.height / 2,
+      0,
+    ],
+    t: [toCard.position[0], toCard.position[1] + toCard.height / 2, 0],
     config: config.stiff,
   })
   return (
@@ -55,7 +59,9 @@ const Connection = React.memo(function Connection({ from, to }) {
       scale-x={interpolate([f, t], (f, t) =>
         Math.sqrt((t[0] - f[0]) ** 2 + (t[1] - f[1]) ** 2),
       )}
-      scale-y={zoom.interpolate(z => 2*getPixelDensityForZoom(-z))}
+      scale-y={zoom.interpolate(z =>
+        Math.min(20, 2 * getPixelDensityForZoom(-z)),
+      )}
       rotation-z={interpolate([f, t], (f, t) =>
         Math.atan2(t[1] - f[1], t[0] - f[0]),
       )}
@@ -72,8 +78,8 @@ export const Connections = ({ connections, cards, cardSprings }) => {
     return (
       <Connection
         key={conn.id}
-        from={cards[cardFromId].position}
-        to={cards[cardToId].position}
+        fromCard={cards[cardFromId]}
+        toCard={cards[cardToId]}
       />
     )
   })

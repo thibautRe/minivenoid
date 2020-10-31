@@ -3,7 +3,7 @@ import React from "react"
 import { a, useSpring, config } from "react-spring/three"
 import { useGesture } from "react-use-gesture"
 import { useZoom } from "./view"
-import { getPixelDensityForZoom, setCursor } from "../utils"
+import { getPixelDensityForZoom, positionToGrid, setCursor } from "../utils"
 
 /**
  * @param {number} width
@@ -66,10 +66,20 @@ const Card = React.memo(function CardMemo({ card, onMoveCard }) {
       onDragStart: () => {
         setCursor("grabbing")
       },
-      onDragEnd: () => {
+      onDragEnd: ({ movement: [mx, my], memo }) => {
         setCursor("grab")
+        if (!memo) return
+        const pixelDensity = getPixelDensityForZoom(zoom.getValue())
+        onMoveCard({
+          id: card.id,
+          position: positionToGrid([
+            memo[0] + mx / pixelDensity,
+            memo[1] - my / pixelDensity,
+            card.position[2],
+          ]),
+        })
       },
-      onDrag: ({ buttons, movement: [mx, my], memo }) => {
+      onDrag: ({ buttons, intentional, movement: [mx, my], memo }) => {
         // Only allow left-click drags
         if (buttons !== 1) {
           return
@@ -90,11 +100,11 @@ const Card = React.memo(function CardMemo({ card, onMoveCard }) {
         return memo
       },
     },
-    { pointerEvents: true, swipeDistance: 10 },
+    { pointerEvents: true, drag: { threshold: 10 } },
   )
 
   const geom = React.useMemo(
-    () => makeCardBufferGeometry(120, card.height, 10, 4),
+    () => makeCardBufferGeometry(card.width, card.height, 10, 4),
     [card.height],
   )
 
