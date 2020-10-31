@@ -2,7 +2,7 @@
 import React from "react"
 import ReactDOM from "react-dom"
 import { Canvas } from "react-three-fiber"
-import { useSpring } from "react-spring/three"
+import { config, useSpring, useSprings } from "react-spring/three"
 import { useGesture } from "react-use-gesture"
 
 import { ViewProvider } from "./three/view"
@@ -15,8 +15,8 @@ import "./index.css"
 
 const urlParams = new URLSearchParams(window.location.search)
 
-const MAX_CARDS = parseInt(urlParams.get("amt")) || 5
-const MAX_CONNECTIONS = 2
+const MAX_CARDS = parseInt(urlParams.get("amt")) || 500
+const MAX_CONNECTIONS = 200
 
 const generateModel = (amt = MAX_CARDS, amtConn = MAX_CONNECTIONS) => {
   const cards = new Array(amt).fill(undefined).map((_, i) => ({
@@ -25,6 +25,7 @@ const generateModel = (amt = MAX_CARDS, amtConn = MAX_CONNECTIONS) => {
       (0.5 - Math.random()) * Math.sqrt(amt) * 400,
       i * 1e-10,
     ],
+    height: (0.5 + Math.random()) * 200,
     id: Math.random().toString(),
   }))
 
@@ -37,23 +38,17 @@ const generateModel = (amt = MAX_CARDS, amtConn = MAX_CONNECTIONS) => {
     }
   })
 
-  const cardsMap = cards.reduce(
-    (mem, card) => ({ ...mem, [card.id]: card }),
-    {},
-  )
-
-  return { connections, cardsMap }
+  return { cards, connections }
 }
-
-const model = generateModel()
 
 const App = () => {
   const domTarget = React.useRef(null)
-  const [cardsMap, setCardsMap] = React.useState(model.cardsMap)
-  // eslint-disable-next-line no-unused-vars
-  const [connections, setConnections] = React.useState(model.connections)
+  const [model, setModel] = React.useState(() => generateModel())
 
-  const [{ zoom }, setZoom] = useSpring(() => ({ zoom: 0 }))
+  const [{ zoom }, setZoom] = useSpring(() => ({
+    from: { zoom: 0 },
+    to: { zoom: -Math.log(Math.sqrt(model.cards.length)) },
+  }))
   const [{ position }, setPosition] = useSpring(() => ({ position: [0, 0] }))
 
   useGesture(
@@ -113,15 +108,25 @@ const App = () => {
     { domTarget, eventOptions: { passive: false } },
   )
 
-  const onChangeCard = React.useCallback((id, action) => {
-    setCardsMap(cards => ({ ...cards, [id]: action(cards[id]) }))
+  const setCard = React.useCallback((id, action) => {
+    setModel(model => {
+      const cardIndex = model.cards.findIndex(c => c.id === id)
+      return {
+        ...model,
+        cards: [
+          ...model.cards.slice(0, cardIndex),
+          action(model.cards[cardIndex]),
+          ...model.cards.slice(cardIndex + 1),
+        ],
+      }
+    })
   }, [])
 
   const onMoveCard = React.useCallback(
     ({ id, position }) => {
-      onChangeCard(id, card => ({ ...card, position }))
+      setCard(id, card => ({ ...card, position }))
     },
-    [onChangeCard],
+    [setCard],
   )
 
   return (
@@ -129,8 +134,8 @@ const App = () => {
       <Canvas>
         <ViewProvider zoom={zoom} position={position}>
           <Camera />
-          <Connections cards={cardsMap} connections={connections} />
-          <Cards cards={cardsMap} onMoveCard={onMoveCard} />
+          <Connections cards={model.cards} connections={model.connections} />
+          <Cards cards={model.cards} onMoveCard={onMoveCard} />
         </ViewProvider>
       </Canvas>
     </div>

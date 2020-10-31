@@ -1,5 +1,6 @@
 // @ts-check
 import React from "react"
+import { a, useSpring, config } from "react-spring/three"
 import { useGesture } from "react-use-gesture"
 import { useZoom } from "./view"
 import { getPixelDensityForZoom, setCursor } from "../utils"
@@ -50,14 +51,7 @@ const makeCardBufferGeometry = (width, height, borderRadius, bevel) =>
 
   ])
 
-const cardBufferGeometry = makeCardBufferGeometry(120, 200, 10, 4)
-
-const Card = React.memo(function CardMemo({
-  card,
-  cardIndex,
-  geometry,
-  onMoveCard,
-}) {
+const Card = React.memo(function CardMemo({ card, onMoveCard }) {
   const zoom = useZoom()
   const bind = useGesture(
     {
@@ -75,41 +69,57 @@ const Card = React.memo(function CardMemo({
       onDragEnd: () => {
         setCursor("grab")
       },
-      onDrag: ({ buttons, active, movement: [mx, my], memo }) => {
+      onDrag: ({ buttons, movement: [mx, my], memo }) => {
         // Only allow left-click drags
         if (buttons !== 1) {
           return
         }
+        setCursor("grabbing")
         if (!memo) {
           memo = card.position
         }
         const pixelDensity = getPixelDensityForZoom(zoom.getValue())
         onMoveCard({
           id: card.id,
-          position: [memo[0] + mx / pixelDensity, memo[1] - my / pixelDensity],
+          position: [
+            memo[0] + mx / pixelDensity,
+            memo[1] - my / pixelDensity,
+            card.position[2],
+          ],
         })
         return memo
       },
     },
-    { pointerEvents: true },
+    { pointerEvents: true, swipeDistance: 10 },
   )
+
+  const geom = React.useMemo(
+    () => makeCardBufferGeometry(120, card.height, 10, 4),
+    [card.height],
+  )
+
+  const { position } = useSpring({
+    position: card.position,
+    config: config.stiff,
+  })
+
   return (
-    <mesh position={[...card.position, cardIndex * 1e-10]} {...bind()}>
+    <a.mesh position={position} {...bind()}>
       <bufferGeometry attach="geometry">
         <bufferAttribute
           attachObject={["attributes", "position"]}
-          count={cardBufferGeometry.length / 3}
-          array={cardBufferGeometry}
+          count={geom.length / 3}
+          array={geom}
           itemSize={3}
         />
       </bufferGeometry>
       <meshBasicMaterial attach="material" color="#EEE" />
-    </mesh>
+    </a.mesh>
   )
 })
 
-export const Cards = ({ cards, ...props }) => {
-  return Object.keys(cards).map((id, index) => (
-    <Card key={id} card={cards[id]} cardIndex={index} {...props} />
+export const Cards = ({ cards, cardSprings, ...props }) => {
+  return cards.map((card, index) => (
+    <Card key={card.id} card={card} cardSprings={cardSprings} {...props} />
   ))
 }

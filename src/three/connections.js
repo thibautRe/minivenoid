@@ -1,47 +1,80 @@
 import React from "react"
-import { useUpdate } from "react-three-fiber"
+import * as THREE from "three"
+import { a, config, interpolate, useSpring } from "react-spring/three"
+import { getPixelDensityForZoom, unitYAxisSquareGeom } from "../utils"
+import { useZoom } from "./view"
 
-const Connection = React.memo(function Connection({
-  fromPosition,
-  toPosition,
-}) {
+/**
+ * 2 Triangles relative to "from" point
+ * @param {[number, number]} from
+ * @param {[number, number]} to
+ * @param {number} width
+ */
+export const makeThickLineGeometry = (from, to, width) => {
+  const vec = [to[0] - from[0], to[1] - from[1]]
+  const normal = [vec[1], -vec[0]]
+  const vecMagnitude = Math.sqrt(vec[0] * vec[0] + vec[1] * vec[1])
+  const normalWidth = [
+    (normal[0] * (width / 2)) / vecMagnitude,
+    (normal[1] * (width / 2)) / vecMagnitude,
+  ]
+
+  const p1 = [normalWidth[0], normalWidth[1]]
+  const p2 = [
+    to[0] - from[0] + normalWidth[0],
+    to[1] - from[1] + normalWidth[1],
+  ]
+  const p3 = [
+    to[0] - from[0] - normalWidth[0],
+    to[1] - from[1] - normalWidth[1],
+  ]
+  const p4 = [-normalWidth[0], -normalWidth[1]]
   // prettier-ignore
-  const connectionBufferGeom = new Float32Array([
-    ...fromPosition, 0,
-    ...toPosition, 0,
+  return new Float32Array([
+    p1[0], p1[1], 0,
+    p2[0], p2[1], 0,
+    p3[0], p3[1], 0,
+
+    p3[0], p3[1], 0,
+    p4[0], p4[1], 0,
+    p1[0], p1[1], 0,
   ])
+}
 
-  const attributeRef = useUpdate(
-    attribute => {
-      attribute.needsUpdate = true
-    },
-    [fromPosition, toPosition],
-  )
-
-  console.log("connection update")
-
+const Connection = React.memo(function Connection({ from, to }) {
+  const zoom = useZoom()
+  const { f, t } = useSpring({
+    f: from,
+    t: to,
+    config: config.stiff,
+  })
   return (
-    <line>
-      <bufferGeometry>
-        <bufferAttribute
-          ref={attributeRef}
-          attachObject={["attributes", "position"]}
-          array={connectionBufferGeom}
-          count={2}
-          itemSize={3}
-        />
-      </bufferGeometry>
-      <lineBasicMaterial color="#999" />
-    </line>
+    <a.mesh
+      geometry={unitYAxisSquareGeom}
+      position={f}
+      scale-x={interpolate([f, t], (f, t) =>
+        Math.sqrt((t[0] - f[0]) ** 2 + (t[1] - f[1]) ** 2),
+      )}
+      scale-y={zoom.interpolate(z => 2*getPixelDensityForZoom(-z))}
+      rotation-z={interpolate([f, t], (f, t) =>
+        Math.atan2(t[1] - f[1], t[0] - f[0]),
+      )}
+    >
+      <lineBasicMaterial color="#777" />
+    </a.mesh>
   )
 })
 
-export const Connections = ({ connections, cards }) => {
-  return connections.map(conn => (
-    <Connection
-      key={conn.id}
-      fromPosition={cards[conn.from].position}
-      toPosition={cards[conn.to].position}
-    />
-  ))
+export const Connections = ({ connections, cards, cardSprings }) => {
+  return connections.map(conn => {
+    const cardFromId = cards.findIndex(c => c.id === conn.from)
+    const cardToId = cards.findIndex(c => c.id === conn.to)
+    return (
+      <Connection
+        key={conn.id}
+        from={cards[cardFromId].position}
+        to={cards[cardToId].position}
+      />
+    )
+  })
 }
