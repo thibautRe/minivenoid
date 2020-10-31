@@ -19,6 +19,8 @@ const Connection = React.memo(function Connection({
     [fromPosition, toPosition],
   )
 
+  console.log("connection update");
+
   return (
     <line>
       <bufferGeometry ref={geomRef} attach="geometry">
@@ -30,7 +32,7 @@ const Connection = React.memo(function Connection({
           itemSize={3}
         />
       </bufferGeometry>
-      <lineBasicMaterial attach="material" color="#333" />
+      <lineBasicMaterial attach="material" color="#999" />
     </line>
   )
 })
@@ -41,8 +43,8 @@ export const Connections = ({ connections, cards }) => {
       {connections.map(conn => (
         <Connection
           key={conn.id}
-          fromPosition={cards.find(c => c.id === conn.from).position}
-          toPosition={cards.find(c => c.id === conn.to).position}
+          fromPosition={cards[conn.from].position}
+          toPosition={cards[conn.to].position}
         />
       ))}
     </>

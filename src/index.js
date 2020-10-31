@@ -36,14 +36,19 @@ const generateModel = (amt = MAX_CARDS, amtConn = MAX_CONNECTIONS) => {
     }
   })
 
-  return { cards, connections }
+  const cardsMap = cards.reduce(
+    (mem, card) => ({ ...mem, [card.id]: card }),
+    {},
+  )
+
+  return { connections, cardsMap }
 }
 
 const model = generateModel()
 
 const App = () => {
   const domTarget = React.useRef(null)
-  const [cards, setCards] = React.useState(model.cards)
+  const [cardsMap, setCardsMap] = React.useState(model.cardsMap)
   // eslint-disable-next-line no-unused-vars
   const [connections, setConnections] = React.useState(model.connections)
 
@@ -112,14 +117,7 @@ const App = () => {
   React.useEffect(bindEvents, [bindEvents])
 
   const onChangeCard = React.useCallback((id, action) => {
-    setCards(cards => {
-      const cardIndex = cards.findIndex(c => c.id === id)
-      return [
-        ...cards.slice(0, cardIndex),
-        action(cards[cardIndex]),
-        ...cards.slice(cardIndex + 1),
-      ]
-    })
+    setCardsMap(cards => ({ ...cards, [id]: action(cards[id]) }))
   }, [])
 
   const onMoveCard = React.useCallback(
@@ -134,8 +132,8 @@ const App = () => {
       <Canvas>
         <ViewProvider zoom={zoom} position={position}>
           <Camera />
-          <Connections cards={cards} connections={connections} />
-          <Cards cards={cards} onMoveCard={onMoveCard} />
+          <Connections cards={cardsMap} connections={connections} />
+          <Cards cards={cardsMap} onMoveCard={onMoveCard} />
         </ViewProvider>
       </Canvas>
     </div>

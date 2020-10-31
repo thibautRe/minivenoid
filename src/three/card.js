@@ -1,6 +1,5 @@
 // @ts-check
 import React from "react"
-import { useResource } from "react-three-fiber"
 import { useGesture } from "react-use-gesture"
 import { useZoom } from "./view"
 import { getPixelDensityForZoom, setCursor } from "../utils"
@@ -24,7 +23,7 @@ const makeCardBufferGeometry = (width, height, borderRadius, bevel) =>
     width, height - borderRadius, 0,
 
     // different bevel levels
-    ...(new Array(bevel).fill(0).map((_, index, arr) => {
+    ...(new Array(bevel).fill(0).flatMap((_, index, arr) => {
       const prevAngle = index * Math.PI/(2*bevel)
       const angle = (index + 1) * Math.PI/(2*bevel)
       
@@ -47,7 +46,7 @@ const makeCardBufferGeometry = (width, height, borderRadius, bevel) =>
         borderRadius*(1-Math.cos(angle)), height - borderRadius*(1-Math.sin(angle)), 0,
         width - borderRadius*(1-Math.cos(prevAngle)), height - borderRadius*(1-Math.sin(prevAngle)), 0,
       ]
-    }).flat())
+    }))
 
   ])
 
@@ -57,7 +56,6 @@ const Card = React.memo(function CardMemo({
   card,
   cardIndex,
   geometry,
-  material,
   onMoveCard,
 }) {
   const zoom = useZoom()
@@ -96,23 +94,8 @@ const Card = React.memo(function CardMemo({
     { pointerEvents: true },
   )
   return (
-    <mesh
-      position={[...card.position, cardIndex * 1e-10]}
-      geometry={geometry}
-      material={material}
-      {...bind()}
-    />
-  )
-})
-
-/** Group of cards - also takes care of declaring reused materials and geometries */
-export const Cards = ({ cards, ...props }) => {
-  const [cardRef, cardGeometry] = useResource()
-  const [cardMaterialRef, cardMaterial] = useResource()
-
-  return (
-    <>
-      <bufferGeometry ref={cardRef}>
+    <mesh position={[...card.position, cardIndex * 1e-10]} {...bind()}>
+      <bufferGeometry attach="geometry">
         <bufferAttribute
           attachObject={["attributes", "position"]}
           count={cardBufferGeometry.length / 3}
@@ -120,19 +103,13 @@ export const Cards = ({ cards, ...props }) => {
           itemSize={3}
         />
       </bufferGeometry>
-      <meshBasicMaterial ref={cardMaterialRef} color="#222" opacity={0.7} />
-      {cardGeometry &&
-        cardMaterial &&
-        cards.map((card, index) => (
-          <Card
-            key={card.id}
-            card={card}
-            cardIndex={index}
-            geometry={cardGeometry}
-            material={cardMaterial}
-            {...props}
-          />
-        ))}
-    </>
+      <meshBasicMaterial attach="material" color="#EEE" />
+    </mesh>
   )
+})
+
+export const Cards = ({ cards, ...props }) => {
+  return Object.keys(cards).map((id, index) => (
+    <Card key={id} card={cards[id]} cardIndex={index} {...props} />
+  ))
 }
