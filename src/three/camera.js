@@ -4,7 +4,7 @@ import { a } from "react-spring/three"
 import { useView } from "./view"
 import { getPixelDensityForZoom } from "../utils"
 
-export const Camera = ({ makeDefault = true, ...props }) => {
+export const Camera = ({ ...props }) => {
   const { setDefaultCamera, camera, size } = useThree()
   const { zoom, position } = useView()
   const cameraRef = React.useRef(null)
@@ -14,13 +14,11 @@ export const Camera = ({ makeDefault = true, ...props }) => {
   })
 
   React.useLayoutEffect(() => {
-    if (makeDefault) {
-      const oldCam = camera
-      setDefaultCamera(cameraRef.current)
-      return () => setDefaultCamera(oldCam)
-    }
+    const oldCam = camera
+    setDefaultCamera(cameraRef.current)
+    return () => setDefaultCamera(oldCam)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [makeDefault, setDefaultCamera])
+  }, [setDefaultCamera])
 
   return (
     <a.orthographicCamera
