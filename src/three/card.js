@@ -55,15 +55,24 @@ const makeCardBufferGeometry = (width, height, borderRadius, bevel) =>
 
 const Card = React.memo(function CardMemo({ card, connections, onChangeCard }) {
   const zoom = useZoom()
+  const [isHovered, setIsHovered] = React.useState(false)
   const bind = useGesture(
     {
+      onPointerEnter: () => {
+        setIsHovered(true)
+      },
+      onPointerLeave: () => {
+        setIsHovered(false)
+      },
       // DEBUG
       onClick: ({ event: { ctrlKey } }) => {
-        if (!ctrlKey) return
-        onChangeCard(card.id, card => ({
-          ...card,
-          height: 20 + Math.random() * 400,
-        }))
+        if (ctrlKey) {
+          onChangeCard(card.id, card => ({
+            ...card,
+            height: 20 + Math.random() * 400,
+          }))
+          return
+        }
       },
       onDragStart: () => {
         setCursor("grabbing")
@@ -116,14 +125,15 @@ const Card = React.memo(function CardMemo({ card, connections, onChangeCard }) {
     },
     [geom],
   )
-  const { position, height, cardColor } = useSpring({
+  const { position, height, cardColor, cardOpacity } = useSpring({
     from: {
       cardColor: "#FFFFFF",
     },
     to: {
       height: card.height,
       position: card.position,
-      cardColor: "#EEEEEE",
+      cardColor: isHovered ? "#D5D5D5" : "#CCCCCC",
+      cardOpacity: isHovered ? 1 : 0.9,
     },
     config: config.stiff,
   })
@@ -142,7 +152,11 @@ const Card = React.memo(function CardMemo({ card, connections, onChangeCard }) {
             itemSize={3}
           />
         </bufferGeometry>
-        <a.meshBasicMaterial color={cardColor} />
+        <a.meshBasicMaterial
+          color={cardColor}
+          opacity={cardOpacity}
+          transparent
+        />
       </mesh>
 
       {/* ENTER - LEFT */}

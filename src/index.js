@@ -24,7 +24,7 @@ const amt = parseInt(urlParams.get("amt")) || 50
 const MAX_CARDS = amt
 const MAX_CONNECTIONS = amt * 0.8
 
-const newId = () => Math.floor(Math.random() * 100000).toString()
+const newId = () => Math.floor(Math.random() * 10000000).toString()
 
 const generateModel = (amt = MAX_CARDS, amtConn = MAX_CONNECTIONS) => {
   const cards = new Array(amt).fill(undefined).map((_, i) => ({
@@ -80,8 +80,6 @@ const getModelBoundingBox = model => {
 const initModel = urlParams.get("model") === "1" ? model1 : generateModel()
 
 const bbox = getModelBoundingBox(initModel)
-
-console.log(bbox)
 
 const App = () => {
   const domTarget = React.useRef(null)

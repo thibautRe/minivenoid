@@ -20,6 +20,7 @@
     "deploy": "gh-pages -d build",
     "start": "react-scripts start",
     "build": "react-scripts build",
+    "serve": "mv build minivenoid && python -m SimpleHTTPServer",
     "test": "react-scripts test",
     "eject": "react-scripts eject"
   },
