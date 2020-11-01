@@ -25,11 +25,17 @@ const ConnectionLine = ({ from, to }) => {
   )
 }
 
-const Connection = React.memo(function Connection({ fromCard, toCard }) {
+const Connection = React.memo(function Connection({
+  connection,
+  fromCard,
+  toCard,
+}) {
+  const exitIndex = fromCard.exits.findIndex(e => e.id === connection.from)
   const { f, t } = useSpring({
     f: [
       fromCard.position[0] + fromCard.width,
-      fromCard.position[1] + fromCard.height / 2,
+      fromCard.position[1] +
+        (fromCard.height * (1 + exitIndex)) / (fromCard.exits.length + 1),
       0,
     ],
     t: [toCard.position[0], toCard.position[1] + toCard.height / 2, 0],
@@ -40,11 +46,14 @@ const Connection = React.memo(function Connection({ fromCard, toCard }) {
 
 export const Connections = ({ connections, cards, cardSprings }) => {
   return connections.map(conn => {
-    const cardFromId = cards.findIndex(c => c.id === conn.from)
+    const cardFromId = cards.findIndex(c =>
+      c.exits.some(e => e.id === conn.from),
+    )
     const cardToId = cards.findIndex(c => c.id === conn.to)
     return (
       <Connection
         key={conn.id}
+        connection={conn}
         fromCard={cards[cardFromId]}
         toCard={cards[cardToId]}
       />

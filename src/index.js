@@ -17,44 +17,90 @@ import {
 
 import "./index.css"
 
+import model1 from "./models/1.json"
+
 const urlParams = new URLSearchParams(window.location.search)
-const amt = parseInt(urlParams.get("amt")) || 500
+const amt = parseInt(urlParams.get("amt")) || 50
 const MAX_CARDS = amt
-const MAX_CONNECTIONS = amt / 2
+const MAX_CONNECTIONS = amt * 0.8
+
+const newId = () => Math.floor(Math.random() * 100000).toString()
 
 const generateModel = (amt = MAX_CARDS, amtConn = MAX_CONNECTIONS) => {
   const cards = new Array(amt).fill(undefined).map((_, i) => ({
+    id: newId(),
     position: positionToGrid([
       (0.5 - Math.random()) * Math.sqrt(amt) * 500,
       (0.5 - Math.random()) * Math.sqrt(amt) * 400,
       i * 1e-10,
     ]),
-    height: (0.5 + Math.random()) * 200,
+    height: Math.round((0.5 + Math.random()) * 200),
     width: 120,
-    id: Math.random().toString(),
+    exits: new Array(Math.floor(Math.random() * 4)).fill().map(_ => ({
+      id: newId(),
+    })),
   }))
 
+  const allExits = cards.flatMap(c => c.exits)
+
   const connections = new Array(amtConn).fill(0).map(() => {
-    const ranId = Math.max(0, Math.floor(Math.random() * cards.length - 1))
     return {
-      id: Math.random().toString(),
-      from: cards[ranId].id,
-      to: cards[ranId + 1].id,
+      id: newId(),
+      from:
+        allExits[Math.max(0, Math.floor(Math.random() * allExits.length - 1))]
+          .id,
+      to: cards[Math.max(0, Math.floor(Math.random() * cards.length - 1))].id,
     }
   })
 
   return { cards, connections }
 }
 
+const getModelBoundingBox = model => {
+  const { cards } = model
+  const minX = cards.reduce(
+    (acc, card) => Math.min(acc, card.position[0]),
+    Infinity,
+  )
+  const maxX = cards.reduce(
+    (acc, card) => Math.max(acc, card.position[0] + card.width),
+    -Infinity,
+  )
+  const minY = cards.reduce(
+    (acc, card) => Math.min(acc, card.position[1]),
+    Infinity,
+  )
+  const maxY = cards.reduce(
+    (acc, card) => Math.max(acc, card.position[1] + card.height),
+    -Infinity,
+  )
+  return { minX, maxX, minY, maxY }
+}
+
+const initModel = urlParams.get("model") === "1" ? model1 : generateModel()
+
+const bbox = getModelBoundingBox(initModel)
+
+console.log(bbox)
+
 const App = () => {
   const domTarget = React.useRef(null)
-  const [model, setModel] = React.useState(() => generateModel())
+  const [model, setModel] = React.useState(initModel)
 
   const [{ zoom }, setZoom] = useSpring(() => ({
-    from: { zoom: 0 },
-    to: { zoom: -Math.log(Math.sqrt(model.cards.length)) },
+    from: { zoom: -4 },
+    to: {
+      zoom: -Math.log(
+        Math.max(
+          (bbox.maxY - bbox.minY + 200) / document.documentElement.clientHeight,
+          (bbox.maxX - bbox.minX + 200) / document.documentElement.clientWidth,
+        ),
+      ),
+    },
   }))
-  const [{ position }, setPosition] = useSpring(() => ({ position: [0, 0] }))
+  const [{ position }, setPosition] = useSpring(() => ({
+    position: [(bbox.maxX + bbox.minX) / 2, -(bbox.maxY + bbox.minY) / 2],
+  }))
 
   useGesture(
     {
@@ -127,7 +173,15 @@ const App = () => {
         })
         return memo
       },
-      onDblClick: ({ event: { clientX, clientY } }) => {
+      // Add a card
+      onDblClick: ({ event: { clientX, clientY, ctrlKey } }) => {
+        if (ctrlKey) {
+          setModel(model => {
+            console.log(JSON.stringify(model, null, 2))
+            return model
+          })
+          return
+        }
         const { width, height } = domTarget.current.getBoundingClientRect()
         const [cx, cy] = getCanvasPosition(
           position.getValue(),
@@ -144,6 +198,7 @@ const App = () => {
               height: 200,
               width: 120,
               position: [cx - 60, cy - 100, model.cards.length * 1e-10],
+              exits: [],
             },
           ],
         }))

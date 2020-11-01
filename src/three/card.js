@@ -145,15 +145,23 @@ const Card = React.memo(function CardMemo({ card, connections, onChangeCard }) {
         <a.meshBasicMaterial color={cardColor} />
       </mesh>
 
-      <CardConnectionDot
-        isConnected={connections.some(c => c.from === card.id)}
-        position-x={card.width}
-        position-y={height.interpolate(h => h / 2)}
-      />
+      {/* ENTER - LEFT */}
       <CardConnectionDot
         isConnected={connections.some(c => c.to === card.id)}
         position-y={height.interpolate(h => h / 2)}
       />
+
+      {/* EXITS - RIGHT */}
+      {card.exits.map((exit, index) => (
+        <CardConnectionDot
+          key={exit.id}
+          isConnected={connections.some(c => exit.id === c.from)}
+          position-x={card.width}
+          position-y={height.interpolate(
+            h => (h * (1 + index)) / (1 + card.exits.length),
+          )}
+        />
+      ))}
     </a.group>
   )
 })
