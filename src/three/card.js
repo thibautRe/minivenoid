@@ -105,7 +105,7 @@ const Card = React.memo(function CardMemo({ card, onMoveCard }) {
 
   const geom = React.useMemo(
     () => makeCardBufferGeometry(card.width, card.height, 10, 4),
-    [card.height],
+    [card.height, card.width],
   )
 
   const { position } = useSpring({

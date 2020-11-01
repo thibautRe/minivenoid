@@ -2,21 +2,25 @@
 import React from "react"
 import ReactDOM from "react-dom"
 import { Canvas } from "react-three-fiber"
-import { config, useSpring, useSprings } from "react-spring/three"
+import { useSpring } from "react-spring/three"
 import { useGesture } from "react-use-gesture"
 
 import { ViewProvider } from "./three/view"
 import { Cards } from "./three/card"
 import { Connections } from "./three/connections"
 import { Camera } from "./three/camera"
-import { getPixelDensityForZoom, positionToGrid } from "./utils"
+import {
+  getCanvasPosition,
+  getPixelDensityForZoom,
+  positionToGrid,
+} from "./utils"
 
 import "./index.css"
 
 const urlParams = new URLSearchParams(window.location.search)
-
-const MAX_CARDS = parseInt(urlParams.get("amt")) || 500
-const MAX_CONNECTIONS = 200
+const amt = parseInt(urlParams.get("amt")) || 500
+const MAX_CARDS = amt
+const MAX_CONNECTIONS = amt / 2
 
 const generateModel = (amt = MAX_CARDS, amtConn = MAX_CONNECTIONS) => {
   const cards = new Array(amt).fill(undefined).map((_, i) => ({
@@ -58,7 +62,7 @@ const App = () => {
         if (!event) return
 
         /** @see https://developer.mozilla.org/en-US/docs/Web/API/WheelEvent/deltaMode */
-        const deltaModeMultiplier = event.deltaMode === 0x00 ? 1 : 50
+        const deltaModeMultiplier = event.deltaMode === 0x00 ? 1 : 20
 
         // Initialize the memo
         if (!memo) {
@@ -76,11 +80,26 @@ const App = () => {
 
         return memo
       },
-      onPinch: ({ event, da: [d] }) => {
+      onPinch: ({ event, origin, da: [d], memo }) => {
         event.preventDefault()
         // sensitivity fix
-        const zoom = d / 50
-        setZoom({ zoom })
+        const delta = d / 50
+        if (!memo) {
+          memo = delta
+        }
+        const z = zoom.getValue() + delta - memo
+        setZoom({ zoom: z })
+
+        // // Scroll towards where the mouse is located
+        // const { width, height } = domTarget.current.getBoundingClientRect()
+        // const newPosition = [
+        //   memo.pos[0] + (delta - memo.delta) * (origin[0] - width / 2),
+        //   memo.pos[1] + (delta - memo.delta) * (origin[1] - height / 2),
+        // ]
+        // console.log(newPosition)
+        // setPosition({ position: newPosition })
+
+        return memo
       },
       onDrag: ({ buttons, active, movement, direction, velocity, memo }) => {
         // only allow the wheel to drag the canvas
@@ -104,6 +123,27 @@ const App = () => {
           },
         })
         return memo
+      },
+      onDblClick: ({ event: { clientX, clientY } }) => {
+        const { width, height } = domTarget.current.getBoundingClientRect()
+        const [cx, cy] = getCanvasPosition(
+          position.getValue(),
+          zoom.getValue(),
+          [clientX, clientY],
+          [width, height],
+        )
+        setModel(model => ({
+          ...model,
+          cards: [
+            ...model.cards,
+            {
+              id: Math.random().toString(),
+              height: 200,
+              width: 120,
+              position: [cx-60, cy-100, model.cards.length * 1e-10],
+            },
+          ],
+        }))
       },
     },
     { domTarget, eventOptions: { passive: false } },
