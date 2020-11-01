@@ -36,6 +36,7 @@ const generateModel = (amt = MAX_CARDS, amtConn = MAX_CONNECTIONS) => {
     ]),
     height: Math.round((0.5 + Math.random()) * 200),
     width: 120,
+    variant: Math.random() > 0.8 ? "solution" : undefined,
     exits: new Array(Math.floor(Math.random() * 4)).fill().map(_ => ({
       id: newId(),
     })),

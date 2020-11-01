@@ -5,16 +5,24 @@ import { getPixelDensityForZoom } from "../utils"
 import { unitCircle } from "./geometries/unitCircle"
 import { useZoom } from "./view"
 
-export const CardConnectionDot = ({ isConnected, ...props }) => {
+export const CardConnectionDot = ({ isConnected, variant, ...props }) => {
   const zoom = useZoom()
   const { outerColor, innerColor } = useSpring({
     from: {
-      outerColor: "#FFF",
-      innerColor: "#FFF",
+      outerColor: "#FFFFFF",
+      innerColor: "#FFFFFF",
     },
     to: {
-      outerColor: isConnected ? "#AAAAAA" : "#666666",
-      innerColor: isConnected ? "#AAAAAA" : "#FFFFFF",
+      outerColor: isConnected
+        ? variant === "solution"
+          ? "#7f333e"
+          : "#3d3f4c"
+        : "#666666",
+      innerColor: isConnected
+        ? variant === "solution"
+          ? "#7f333e"
+          : "#3d3f4c"
+        : "#FFFFFF",
     },
   })
   return (

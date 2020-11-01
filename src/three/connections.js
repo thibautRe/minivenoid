@@ -1,17 +1,17 @@
 import React from "react"
-import * as THREE from "three"
 import { a, config, interpolate, useSpring } from "react-spring/three"
 import { get2dCubicBezier, getPixelDensityForZoom } from "../utils"
 import { unitYAxisSquareGeom } from "./geometries/unitSquare"
 import { useZoom } from "./view"
 
-const material = new THREE.MeshBasicMaterial({ color: "#333" })
-const ConnectionLine = ({ from, to }) => {
+const ConnectionLine = ({ from, to, variant }) => {
   const zoom = useZoom()
+  const { color } = useSpring({
+    color: variant === "solution" ? "#7f333e" : "#3d3f4c",
+  })
   return (
     <a.mesh
       geometry={unitYAxisSquareGeom}
-      material={material}
       position={from}
       scale-x={interpolate([from, to], (f, t) =>
         Math.sqrt((t[0] - f[0]) ** 2 + (t[1] - f[1]) ** 2),
@@ -22,11 +22,13 @@ const ConnectionLine = ({ from, to }) => {
       rotation-z={interpolate([from, to], (f, t) =>
         Math.atan2(t[1] - f[1], t[0] - f[0]),
       )}
-    />
+    >
+      <a.meshBasicMaterial color={color} />
+    </a.mesh>
   )
 }
 
-const BezierConnectionLine = ({ from, to, resolution = 10 }) => {
+const BezierConnectionLine = ({ from, to, resolution = 10, ...props }) => {
   return new Array(resolution)
     .fill()
     .map((_, i, arr) => (
@@ -48,6 +50,7 @@ const BezierConnectionLine = ({ from, to, resolution = 10 }) => {
             t,
           )((i + 1) / arr.length),
         )}
+        {...props}
       />
     ))
 }
@@ -68,7 +71,7 @@ const Connection = React.memo(function Connection({
     t: [toCard.position[0], toCard.position[1] + toCard.height / 2, 0],
     config: config.stiff,
   })
-  return <BezierConnectionLine from={f} to={t} />
+  return <BezierConnectionLine from={f} to={t} variant={toCard.variant} />
 })
 
 export const Connections = ({ connections, cards, cardSprings }) => {

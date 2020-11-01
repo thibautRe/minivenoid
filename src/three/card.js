@@ -67,13 +67,20 @@ const Card = React.memo(function CardMemo({ card, connections, onChangeCard }) {
         setIsHovered(false)
       },
       // DEBUG
-      onClick: ({ event: { ctrlKey } }) => {
+      onClick: ({ event: { ctrlKey, altKey } }) => {
         if (ctrlKey) {
           onChangeCard(card.id, card => ({
             ...card,
             height: 20 + Math.random() * 400,
           }))
           return
+        }
+
+        if (altKey) {
+          onChangeCard(card.id, c => ({
+            ...c,
+            variant: c.variant === "solution" ? undefined : "solution",
+          }))
         }
       },
       onDragStart: () => {
@@ -136,7 +143,13 @@ const Card = React.memo(function CardMemo({ card, connections, onChangeCard }) {
     to: {
       height: card.height,
       position: card.position,
-      cardColor: isHovered ? "#D5D5D5" : "#CCCCCC",
+      cardColor: isHovered
+        ? card.variant === "solution"
+          ? "#993d4a"
+          : "#515466"
+        : card.variant === "solution"
+        ? "#7f333e"
+        : "#3d3f4c",
       cardOpacity: isHovered ? 1 : 0.9,
     },
     config: config.stiff,
@@ -167,6 +180,7 @@ const Card = React.memo(function CardMemo({ card, connections, onChangeCard }) {
         {/* ENTER - LEFT */}
         <CardConnectionDot
           isConnected={connections.some(c => c.to === card.id)}
+          variant={card.variant}
           position-y={height.interpolate(h => h / 2)}
         />
 
@@ -175,6 +189,7 @@ const Card = React.memo(function CardMemo({ card, connections, onChangeCard }) {
           <CardConnectionDot
             key={exit.id}
             isConnected={connections.some(c => exit.id === c.from)}
+            variant={card.variant}
             position-x={card.width}
             position-y={height.interpolate(
               h => (h * (1 + index)) / (1 + card.exits.length),
