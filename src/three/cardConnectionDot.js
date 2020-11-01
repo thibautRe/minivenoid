@@ -23,8 +23,8 @@ export const CardConnectionDot = ({ isConnected, ...props }) => {
       <a.mesh
         geometry={unitCircle}
         scale={zoom.interpolate(z => [
-          Math.min(6 / getPixelDensityForZoom(z), 40),
-          Math.min(6 / getPixelDensityForZoom(z), 40),
+          Math.min(6 / getPixelDensityForZoom(z), 30),
+          Math.min(6 / getPixelDensityForZoom(z), 30),
           1,
         ])}
       >
@@ -35,8 +35,8 @@ export const CardConnectionDot = ({ isConnected, ...props }) => {
       <a.mesh
         geometry={unitCircle}
         scale={zoom.interpolate(z => [
-          Math.min(5 / getPixelDensityForZoom(z), 30),
-          Math.min(5 / getPixelDensityForZoom(z), 30),
+          Math.min(5 / getPixelDensityForZoom(z), 24),
+          Math.min(5 / getPixelDensityForZoom(z), 24),
           1,
         ])}
         position-z={1e-10}

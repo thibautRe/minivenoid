@@ -6,6 +6,7 @@ import { useZoom } from "./view"
 import { getPixelDensityForZoom, positionToGrid, setCursor } from "../utils"
 import { CardConnectionDot } from "./cardConnectionDot"
 import { useUpdate } from "react-three-fiber"
+import { unitSquareGeom } from "./geometries/unitSquare"
 
 /**
  * @param {number} width
@@ -56,6 +57,7 @@ const makeCardBufferGeometry = (width, height, borderRadius, bevel) =>
 const Card = React.memo(function CardMemo({ card, connections, onChangeCard }) {
   const zoom = useZoom()
   const [isHovered, setIsHovered] = React.useState(false)
+  const [isDragged, setIsDragged] = React.useState(false)
   const bind = useGesture(
     {
       onPointerEnter: () => {
@@ -76,9 +78,11 @@ const Card = React.memo(function CardMemo({ card, connections, onChangeCard }) {
       },
       onDragStart: () => {
         setCursor("grabbing")
+        setIsDragged(true)
       },
       onDragEnd: ({ movement: [mx, my], memo }) => {
         setCursor()
+        setIsDragged(false)
         if (!memo) return
         const pixelDensity = getPixelDensityForZoom(zoom.getValue())
         onChangeCard(card.id, card => ({
@@ -139,44 +143,57 @@ const Card = React.memo(function CardMemo({ card, connections, onChangeCard }) {
   })
 
   return (
-    <a.group position={position}>
-      {/* BODY */}
+    <>
+      <a.group position={position}>
+        {/* BODY */}
 
-      <mesh {...bind()}>
-        <bufferGeometry>
-          <bufferAttribute
-            ref={ref}
-            attachObject={["attributes", "position"]}
-            count={geom.length / 3}
-            array={geom}
-            itemSize={3}
+        <mesh {...bind()}>
+          <bufferGeometry>
+            <bufferAttribute
+              ref={ref}
+              attachObject={["attributes", "position"]}
+              count={geom.length / 3}
+              array={geom}
+              itemSize={3}
+            />
+          </bufferGeometry>
+          <a.meshBasicMaterial
+            color={cardColor}
+            opacity={cardOpacity}
+            transparent
           />
-        </bufferGeometry>
-        <a.meshBasicMaterial
-          color={cardColor}
-          opacity={cardOpacity}
-          transparent
-        />
-      </mesh>
+        </mesh>
 
-      {/* ENTER - LEFT */}
-      <CardConnectionDot
-        isConnected={connections.some(c => c.to === card.id)}
-        position-y={height.interpolate(h => h / 2)}
-      />
-
-      {/* EXITS - RIGHT */}
-      {card.exits.map((exit, index) => (
+        {/* ENTER - LEFT */}
         <CardConnectionDot
-          key={exit.id}
-          isConnected={connections.some(c => exit.id === c.from)}
-          position-x={card.width}
-          position-y={height.interpolate(
-            h => (h * (1 + index)) / (1 + card.exits.length),
-          )}
+          isConnected={connections.some(c => c.to === card.id)}
+          position-y={height.interpolate(h => h / 2)}
         />
-      ))}
-    </a.group>
+
+        {/* EXITS - RIGHT */}
+        {card.exits.map((exit, index) => (
+          <CardConnectionDot
+            key={exit.id}
+            isConnected={connections.some(c => exit.id === c.from)}
+            position-x={card.width}
+            position-y={height.interpolate(
+              h => (h * (1 + index)) / (1 + card.exits.length),
+            )}
+          />
+        ))}
+      </a.group>
+
+      {isDragged && (
+        <mesh
+          position={positionToGrid(card.position)}
+          scale-x={card.width}
+          scale-y={card.height}
+          geometry={unitSquareGeom}
+        >
+          <meshBasicMaterial transparent opacity={0.3} color="#CCC" />
+        </mesh>
+      )}
+    </>
   )
 })
 
