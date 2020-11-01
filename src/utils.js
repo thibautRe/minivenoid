@@ -1,4 +1,3 @@
-import * as THREE from "three"
 
 /**
  * Returns the pixel density for a given zoom level
@@ -36,23 +35,3 @@ export const setCursor = cursor => {
 
 const pToGrid = p => Math.round(p / 50) * 50
 export const positionToGrid = pos => [pToGrid(pos[0]), pToGrid(pos[1]), pos[2]]
-
-/**
- * Unit square of 1 by 1
- */
-// prettier-ignore
-const yAxixUnitSquare = new Float32Array([
-  0,-0.5,0,
-  1,0.5,0,
-  0,0.5,0,
-
-  0,-0.5,0,
-  1,-0.5,0,
-  1,0.5,0,
-])
-
-export const unitYAxisSquareGeom = new THREE.BufferGeometry()
-unitYAxisSquareGeom.setAttribute(
-  "position",
-  new THREE.BufferAttribute(yAxixUnitSquare, 3),
-)

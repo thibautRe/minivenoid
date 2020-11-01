@@ -4,6 +4,8 @@ import { a, useSpring, config } from "react-spring/three"
 import { useGesture } from "react-use-gesture"
 import { useZoom } from "./view"
 import { getPixelDensityForZoom, positionToGrid, setCursor } from "../utils"
+import { CardConnectionDot } from "./cardConnectionDot"
+import { useUpdate } from "react-three-fiber"
 
 /**
  * @param {number} width
@@ -51,33 +53,33 @@ const makeCardBufferGeometry = (width, height, borderRadius, bevel) =>
 
   ])
 
-const Card = React.memo(function CardMemo({ card, onMoveCard }) {
+const Card = React.memo(function CardMemo({ card, connections, onChangeCard }) {
   const zoom = useZoom()
   const bind = useGesture(
     {
-      onPointerEnter: ({ buttons }) => {
-        if (buttons) return
-        setCursor("grab")
-      },
-      onPointerLeave: ({ buttons, button }) => {
-        if (buttons) return
-        setCursor()
+      // DEBUG
+      onClick: ({ event: { ctrlKey } }) => {
+        if (!ctrlKey) return
+        onChangeCard(card.id, card => ({
+          ...card,
+          height: 20 + Math.random() * 400,
+        }))
       },
       onDragStart: () => {
         setCursor("grabbing")
       },
       onDragEnd: ({ movement: [mx, my], memo }) => {
-        setCursor("grab")
+        setCursor()
         if (!memo) return
         const pixelDensity = getPixelDensityForZoom(zoom.getValue())
-        onMoveCard({
-          id: card.id,
+        onChangeCard(card.id, card => ({
+          ...card,
           position: positionToGrid([
             memo[0] + mx / pixelDensity,
             memo[1] - my / pixelDensity,
             card.position[2],
           ]),
-        })
+        }))
       },
       onDrag: ({ buttons, intentional, movement: [mx, my], memo }) => {
         // Only allow left-click drags
@@ -89,14 +91,14 @@ const Card = React.memo(function CardMemo({ card, onMoveCard }) {
           memo = card.position
         }
         const pixelDensity = getPixelDensityForZoom(zoom.getValue())
-        onMoveCard({
-          id: card.id,
+        onChangeCard(card.id, card => ({
+          ...card,
           position: [
             memo[0] + mx / pixelDensity,
             memo[1] - my / pixelDensity,
             card.position[2],
           ],
-        })
+        }))
         return memo
       },
     },
@@ -108,28 +110,56 @@ const Card = React.memo(function CardMemo({ card, onMoveCard }) {
     [card.height, card.width],
   )
 
-  const { position } = useSpring({
-    position: card.position,
+  const ref = useUpdate(
+    self => {
+      self.needsUpdate = true
+    },
+    [geom],
+  )
+  const { position, height, cardColor } = useSpring({
+    from: {
+      cardColor: "#FFFFFF",
+    },
+    to: {
+      height: card.height,
+      position: card.position,
+      cardColor: "#EEEEEE",
+    },
     config: config.stiff,
   })
 
   return (
-    <a.mesh position={position} {...bind()}>
-      <bufferGeometry attach="geometry">
-        <bufferAttribute
-          attachObject={["attributes", "position"]}
-          count={geom.length / 3}
-          array={geom}
-          itemSize={3}
-        />
-      </bufferGeometry>
-      <meshBasicMaterial attach="material" color="#EEE" />
-    </a.mesh>
+    <a.group position={position}>
+      {/* BODY */}
+
+      <mesh {...bind()}>
+        <bufferGeometry>
+          <bufferAttribute
+            ref={ref}
+            attachObject={["attributes", "position"]}
+            count={geom.length / 3}
+            array={geom}
+            itemSize={3}
+          />
+        </bufferGeometry>
+        <a.meshBasicMaterial color={cardColor} />
+      </mesh>
+
+      <CardConnectionDot
+        isConnected={connections.some(c => c.from === card.id)}
+        position-x={card.width}
+        position-y={height.interpolate(h => h / 2)}
+      />
+      <CardConnectionDot
+        isConnected={connections.some(c => c.to === card.id)}
+        position-y={height.interpolate(h => h / 2)}
+      />
+    </a.group>
   )
 })
 
-export const Cards = ({ cards, cardSprings, ...props }) => {
+export const Cards = ({ cards, ...props }) => {
   return cards.map((card, index) => (
-    <Card key={card.id} card={card} cardSprings={cardSprings} {...props} />
+    <Card key={card.id} card={card} {...props} />
   ))
 }

@@ -75,7 +75,6 @@ const App = () => {
           position: movement.map(
             (m, i) => (m / pixelDensity) * deltaModeMultiplier + memo[i],
           ),
-          immediate: active,
         })
 
         return memo
@@ -85,18 +84,26 @@ const App = () => {
         // sensitivity fix
         const delta = d / 50
         if (!memo) {
-          memo = delta
+          memo = {
+            delta,
+            initZoom: zoom.getValue(),
+            initPos: position.getValue(),
+          }
         }
-        const z = zoom.getValue() + delta - memo
+        const z = memo.initZoom + delta - memo.delta
         setZoom({ zoom: z })
 
         // // Scroll towards where the mouse is located
         // const { width, height } = domTarget.current.getBoundingClientRect()
+        // const [tx, ty] = getCanvasPosition(position.getValue(), z, origin, [
+        //   width,
+        //   height,
+        // ])
+        // const c = getPixelDensityForZoom(memo.delta-delta)
         // const newPosition = [
-        //   memo.pos[0] + (delta - memo.delta) * (origin[0] - width / 2),
-        //   memo.pos[1] + (delta - memo.delta) * (origin[1] - height / 2),
+        //   memo.initPos[0] * c + (1 - c) * tx,
+        //   memo.initPos[1] * c - (1 - c) * ty,
         // ]
-        // console.log(newPosition)
         // setPosition({ position: newPosition })
 
         return memo
@@ -117,10 +124,6 @@ const App = () => {
 
         setPosition({
           position: movement.map((m, i) => m * pixelDensity + memo[i]),
-          immediate: active,
-          config: {
-            velocity: direction.map(d => d * velocity),
-          },
         })
         return memo
       },
@@ -140,7 +143,7 @@ const App = () => {
               id: Math.random().toString(),
               height: 200,
               width: 120,
-              position: [cx-60, cy-100, model.cards.length * 1e-10],
+              position: [cx - 60, cy - 100, model.cards.length * 1e-10],
             },
           ],
         }))
@@ -163,20 +166,17 @@ const App = () => {
     })
   }, [])
 
-  const onMoveCard = React.useCallback(
-    ({ id, position }) => {
-      setCard(id, card => ({ ...card, position }))
-    },
-    [setCard],
-  )
-
   return (
     <div ref={domTarget}>
       <Canvas>
         <ViewProvider zoom={zoom} position={position}>
           <Camera />
           <Connections cards={model.cards} connections={model.connections} />
-          <Cards cards={model.cards} onMoveCard={onMoveCard} />
+          <Cards
+            cards={model.cards}
+            connections={model.connections}
+            onChangeCard={setCard}
+          />
         </ViewProvider>
       </Canvas>
     </div>
