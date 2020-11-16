@@ -7,6 +7,8 @@ import { getPixelDensityForZoom, positionToGrid, setCursor } from "../utils"
 import { CardConnectionDot } from "./cardConnectionDot"
 import { useUpdate } from "react-three-fiber"
 import { unitSquareGeom } from "./geometries/unitSquare"
+import { useModelStore } from "../store"
+import shallow from "zustand/shallow"
 
 /**
  * @param {number} width
@@ -54,10 +56,18 @@ const makeCardBufferGeometry = (width, height, borderRadius, bevel) =>
 
   ])
 
-const Card = React.memo(function CardMemo({ card, connections, onChangeCard }) {
+const Card = React.memo(function CardMemo({ cardId }) {
   const zoom = useZoom()
   const [isHovered, setIsHovered] = React.useState(false)
   const [isDragged, setIsDragged] = React.useState(false)
+
+  const [card, connections, setCard] = useModelStore(
+    React.useCallback(
+      s => [s.cards.find(c => c.id === cardId), s.connections, s.setCard],
+      [cardId],
+    ),
+    shallow,
+  )
   const bind = useGesture(
     {
       onPointerEnter: () => {
@@ -69,15 +79,12 @@ const Card = React.memo(function CardMemo({ card, connections, onChangeCard }) {
       // DEBUG
       onClick: ({ event: { ctrlKey, altKey } }) => {
         if (ctrlKey) {
-          onChangeCard(card.id, card => ({
-            ...card,
-            height: 20 + Math.random() * 400,
-          }))
+          setCard(cardId, c => ({ ...c, height: 20 + Math.random() * 400 }))
           return
         }
 
         if (altKey) {
-          onChangeCard(card.id, c => ({
+          setCard(cardId, c => ({
             ...c,
             variant: c.variant === "solution" ? undefined : "solution",
           }))
@@ -92,7 +99,7 @@ const Card = React.memo(function CardMemo({ card, connections, onChangeCard }) {
         setIsDragged(false)
         if (!memo) return
         const pixelDensity = getPixelDensityForZoom(zoom.getValue())
-        onChangeCard(card.id, card => ({
+        setCard(card.id, card => ({
           ...card,
           position: positionToGrid([
             memo[0] + mx / pixelDensity,
@@ -111,7 +118,7 @@ const Card = React.memo(function CardMemo({ card, connections, onChangeCard }) {
           memo = card.position
         }
         const pixelDensity = getPixelDensityForZoom(zoom.getValue())
-        onChangeCard(card.id, card => ({
+        setCard(card.id, card => ({
           ...card,
           position: [
             memo[0] + mx / pixelDensity,
@@ -136,7 +143,7 @@ const Card = React.memo(function CardMemo({ card, connections, onChangeCard }) {
     },
     [geom],
   )
-  const { position, height, cardColor, cardOpacity } = useSpring({
+  const { position, height, cardColor } = useSpring({
     from: {
       cardColor: "#FFFFFF",
     },
@@ -150,7 +157,6 @@ const Card = React.memo(function CardMemo({ card, connections, onChangeCard }) {
         : card.variant === "solution"
         ? "#7f333e"
         : "#3d3f4c",
-      cardOpacity: isHovered ? 1 : 0.9,
     },
     config: config.stiff,
   })
@@ -170,11 +176,7 @@ const Card = React.memo(function CardMemo({ card, connections, onChangeCard }) {
               itemSize={3}
             />
           </bufferGeometry>
-          <a.meshBasicMaterial
-            color={cardColor}
-            opacity={cardOpacity}
-            transparent
-          />
+          <a.meshBasicMaterial color={cardColor} />
         </mesh>
 
         {/* ENTER - LEFT */}
@@ -200,20 +202,19 @@ const Card = React.memo(function CardMemo({ card, connections, onChangeCard }) {
 
       {isDragged && (
         <mesh
-          position={positionToGrid(card.position)}
+          position={positionToGrid([card.position[0], card.position[1], -1])}
           scale-x={card.width}
           scale-y={card.height}
           geometry={unitSquareGeom}
         >
-          <meshBasicMaterial transparent opacity={0.3} color="#CCC" />
+          <meshBasicMaterial color="#EEE" />
         </mesh>
       )}
     </>
   )
 })
 
-export const Cards = ({ cards, ...props }) => {
-  return cards.map((card, index) => (
-    <Card key={card.id} card={card} {...props} />
-  ))
+export const Cards = () => {
+  const cardIds = useModelStore(s => s.cards.map(c => c.id), shallow)
+  return cardIds.map(cardId => <Card key={cardId} cardId={cardId} />)
 }

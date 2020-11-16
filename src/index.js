@@ -4,6 +4,7 @@ import ReactDOM from "react-dom"
 import { Canvas } from "react-three-fiber"
 import { useSpring } from "react-spring/three"
 import { useGesture } from "react-use-gesture"
+import shallow from "zustand/shallow"
 
 import { ViewProvider } from "./three/view"
 import { Cards } from "./three/card"
@@ -11,95 +12,34 @@ import { Connections } from "./three/connections"
 import { Camera } from "./three/camera"
 import {
   getCanvasPosition,
+  getModelBoundingBox,
   getPixelDensityForZoom,
-  positionToGrid,
 } from "./utils"
+import { useModelStore } from "./store"
 
 import "./index.css"
 
-import model1 from "./models/1.json"
-
-const urlParams = new URLSearchParams(window.location.search)
-const amt = parseInt(urlParams.get("amt")) || 50
-const MAX_CARDS = amt
-const MAX_CONNECTIONS = amt * 0.8
-
-const newId = () => Math.floor(Math.random() * 10000000).toString()
-
-const generateModel = (amt = MAX_CARDS, amtConn = MAX_CONNECTIONS) => {
-  const cards = new Array(amt).fill(undefined).map((_, i) => ({
-    id: newId(),
-    position: positionToGrid([
-      (0.5 - Math.random()) * Math.sqrt(amt) * 500,
-      (0.5 - Math.random()) * Math.sqrt(amt) * 400,
-      i * 1e-10,
-    ]),
-    height: Math.round((0.5 + Math.random()) * 200),
-    width: 120,
-    variant: Math.random() > 0.8 ? "solution" : undefined,
-    exits: new Array(Math.floor(Math.random() * 4)).fill().map(_ => ({
-      id: newId(),
-    })),
-  }))
-
-  const allExits = cards.flatMap(c => c.exits)
-
-  const connections = new Array(amtConn).fill(0).map(() => {
-    return {
-      id: newId(),
-      from:
-        allExits[Math.max(0, Math.floor(Math.random() * allExits.length - 1))]
-          .id,
-      to: cards[Math.max(0, Math.floor(Math.random() * cards.length - 1))].id,
-    }
-  })
-
-  return { cards, connections }
-}
-
-const getModelBoundingBox = model => {
-  const { cards } = model
-  const minX = cards.reduce(
-    (acc, card) => Math.min(acc, card.position[0]),
-    Infinity,
-  )
-  const maxX = cards.reduce(
-    (acc, card) => Math.max(acc, card.position[0] + card.width),
-    -Infinity,
-  )
-  const minY = cards.reduce(
-    (acc, card) => Math.min(acc, card.position[1]),
-    Infinity,
-  )
-  const maxY = cards.reduce(
-    (acc, card) => Math.max(acc, card.position[1] + card.height),
-    -Infinity,
-  )
-  return { minX, maxX, minY, maxY }
-}
-
-const initModel = urlParams.get("model") === "1" ? model1 : generateModel()
-
-const bbox = getModelBoundingBox(initModel)
-
 const App = () => {
   const domTarget = React.useRef(null)
-  const [model, setModel] = React.useState(initModel)
+  const addCard = useModelStore(s => s.addCard)
 
-  const [{ zoom }, setZoom] = useSpring(() => ({
-    from: { zoom: -4 },
-    to: {
-      zoom: -Math.log(
-        Math.max(
-          (bbox.maxY - bbox.minY + 200) / document.documentElement.clientHeight,
-          (bbox.maxX - bbox.minX + 200) / document.documentElement.clientWidth,
+  const [{ zoom, position }, setCamera] = useSpring(() => {
+    const bbox = getModelBoundingBox(useModelStore.getState().cards)
+    return {
+      from: { zoom: -4 },
+      to: {
+        position: [(bbox.maxX + bbox.minX) / 2, -(bbox.maxY + bbox.minY) / 2],
+        zoom: -Math.log(
+          Math.max(
+            (bbox.maxY - bbox.minY + 200) /
+              document.documentElement.clientHeight,
+            (bbox.maxX - bbox.minX + 200) /
+              document.documentElement.clientWidth,
+          ),
         ),
-      ),
-    },
-  }))
-  const [{ position }, setPosition] = useSpring(() => ({
-    position: [(bbox.maxX + bbox.minX) / 2, -(bbox.maxY + bbox.minY) / 2],
-  }))
+      },
+    }
+  })
 
   useGesture(
     {
@@ -116,7 +56,7 @@ const App = () => {
 
         const pixelDensity = getPixelDensityForZoom(zoom.getValue())
 
-        setPosition({
+        setCamera({
           position: movement.map(
             (m, i) => (m / pixelDensity) * deltaModeMultiplier + memo[i],
           ),
@@ -136,7 +76,7 @@ const App = () => {
           }
         }
         const z = memo.initZoom + delta - memo.delta
-        setZoom({ zoom: z })
+        setCamera({ zoom: z })
 
         // // Scroll towards where the mouse is located
         // const { width, height } = domTarget.current.getBoundingClientRect()
@@ -167,7 +107,7 @@ const App = () => {
 
         const pixelDensity = getPixelDensityForZoom(zoom.getValue())
 
-        setPosition({
+        setCamera({
           position: movement.map((m, i) => m * pixelDensity + memo[i]),
         })
         return memo
@@ -175,11 +115,14 @@ const App = () => {
       // Add a card
       onDblClick: ({ event: { clientX, clientY, ctrlKey } }) => {
         if (ctrlKey) {
-          setModel(model => {
-            console.log(JSON.stringify(model, null, 2))
-            return model
-          })
-          return
+          const s = useModelStore.getState()
+          console.log(
+            JSON.stringify(
+              { cards: s.cards, connections: s.connections },
+              null,
+              2,
+            ),
+          )
         }
         const { width, height } = domTarget.current.getBoundingClientRect()
         const [cx, cy] = getCanvasPosition(
@@ -188,49 +131,24 @@ const App = () => {
           [clientX, clientY],
           [width, height],
         )
-        setModel(model => ({
-          ...model,
-          cards: [
-            ...model.cards,
-            {
-              id: Math.random().toString(),
-              height: 200,
-              width: 120,
-              position: [cx - 60, cy - 100, model.cards.length * 1e-10],
-              exits: [],
-            },
-          ],
-        }))
+        addCard({
+          height: 200,
+          width: 120,
+          position: [cx - 60, cy - 100, Math.random() * 1e-10],
+          exits: [],
+        })
       },
     },
     { domTarget, eventOptions: { passive: false } },
   )
-
-  const setCard = React.useCallback((id, action) => {
-    setModel(model => {
-      const cardIndex = model.cards.findIndex(c => c.id === id)
-      return {
-        ...model,
-        cards: [
-          ...model.cards.slice(0, cardIndex),
-          action(model.cards[cardIndex]),
-          ...model.cards.slice(cardIndex + 1),
-        ],
-      }
-    })
-  }, [])
 
   return (
     <div ref={domTarget}>
       <Canvas>
         <ViewProvider zoom={zoom} position={position}>
           <Camera />
-          <Connections cards={model.cards} connections={model.connections} />
-          <Cards
-            cards={model.cards}
-            connections={model.connections}
-            onChangeCard={setCard}
-          />
+          <Connections />
+          <Cards />
         </ViewProvider>
       </Canvas>
     </div>

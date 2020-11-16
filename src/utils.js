@@ -21,6 +21,29 @@ export const getCanvasPosition = (camPos, camZoom, mousePos, canvasSize) => {
 }
 
 /**
+ * Returns a Bounding Box based on a collection of cards
+ */
+export const getModelBoundingBox = cards => {
+  const minX = cards.reduce(
+    (acc, card) => Math.min(acc, card.position[0]),
+    Infinity,
+  )
+  const maxX = cards.reduce(
+    (acc, card) => Math.max(acc, card.position[0] + card.width),
+    -Infinity,
+  )
+  const minY = cards.reduce(
+    (acc, card) => Math.min(acc, card.position[1]),
+    Infinity,
+  )
+  const maxY = cards.reduce(
+    (acc, card) => Math.max(acc, card.position[1] + card.height),
+    -Infinity,
+  )
+  return { minX, maxX, minY, maxY }
+}
+
+/**
  * Sets the global cursor type
  * @param {string} [cursor]
  */
