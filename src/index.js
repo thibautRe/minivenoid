@@ -144,7 +144,7 @@ const App = () => {
 
   return (
     <div ref={domTarget}>
-      <Canvas>
+      <Canvas invalidateFrameloop>
         <ViewProvider zoom={zoom} position={position}>
           <Camera />
           <Connections />

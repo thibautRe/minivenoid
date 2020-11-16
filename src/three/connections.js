@@ -125,7 +125,7 @@ const Connection = React.memo(function Connection({ connectionId }) {
 
     // NOTE: the divisions cannot be changed at runtime for
     // the same bufferAttribute
-    const divisions = 12
+    const divisions = 100
     let prevPoint = bezierCurve.getPoint(0)
     let prevCoTangent = bezierCurve.getTangent(0)
     const tmp = prevCoTangent.x
