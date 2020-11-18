@@ -1,65 +1,12 @@
 import React from "react"
 import * as THREE from "three"
-import { a, config, interpolate, useSpring } from "react-spring/three"
+import { a, config, useSpring } from "react-spring/three"
 import shallow from "zustand/shallow"
 import { useFrame } from "react-three-fiber"
 
 import { useModelStore } from "../store"
-import { get2dCubicBezier, getPixelDensityForZoom } from "../utils"
-import { unitYAxisSquareGeom } from "./geometries/unitSquare"
+import { getPixelDensityForZoom } from "../utils"
 import { useZoom } from "./view"
-import { MeshBasicMaterial } from "three"
-
-const ConnectionLine = ({ from, to, variant }) => {
-  const zoom = useZoom()
-  const { color } = useSpring({
-    color: variant === "solution" ? "#7f333e" : "#3d3f4c",
-  })
-  return (
-    <a.mesh
-      geometry={unitYAxisSquareGeom}
-      position={from}
-      scale-x={interpolate([from, to], (f, t) =>
-        Math.sqrt((t[0] - f[0]) ** 2 + (t[1] - f[1]) ** 2),
-      )}
-      scale-y={zoom.interpolate(z =>
-        Math.min(20, 2 * getPixelDensityForZoom(-z)),
-      )}
-      rotation-z={interpolate([from, to], (f, t) =>
-        Math.atan2(t[1] - f[1], t[0] - f[0]),
-      )}
-    >
-      <a.meshBasicMaterial color={color} />
-    </a.mesh>
-  )
-}
-
-const BezierConnectionLine = ({ from, to, resolution = 20, ...props }) => {
-  return new Array(resolution)
-    .fill()
-    .map((_, i, arr) => (
-      <ConnectionLine
-        key={i}
-        from={interpolate([from, to], (f, t) =>
-          get2dCubicBezier(
-            f,
-            [Math.max((f[0] + t[0]) / 2, f[0] + 50), f[1]],
-            [Math.min((f[0] + t[0]) / 2, t[0] - 50), t[1]],
-            t,
-          )(i / arr.length),
-        )}
-        to={interpolate([from, to], (f, t) =>
-          get2dCubicBezier(
-            f,
-            [Math.max((f[0] + t[0]) / 2, f[0] + 50), f[1]],
-            [Math.min((f[0] + t[0]) / 2, t[0] - 50), t[1]],
-            t,
-          )((i + 1) / arr.length),
-        )}
-        {...props}
-      />
-    ))
-}
 
 const Connection = React.memo(function Connection({ connectionId }) {
   const zoom = useZoom()

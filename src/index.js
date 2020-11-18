@@ -4,7 +4,6 @@ import ReactDOM from "react-dom"
 import { Canvas } from "react-three-fiber"
 import { useSpring } from "react-spring/three"
 import { useGesture } from "react-use-gesture"
-import shallow from "zustand/shallow"
 
 import { ViewProvider } from "./three/view"
 import { Cards } from "./three/card"
