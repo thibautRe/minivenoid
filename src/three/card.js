@@ -1,60 +1,13 @@
 // @ts-check
 import React from "react"
-import { a, useSpring, config } from "react-spring/three"
+import { a, useSpring, config } from "react-spring"
 import { useGesture } from "react-use-gesture"
+import shallow from "zustand/shallow"
+
 import { useZoom } from "./view"
 import { getPixelDensityForZoom, positionToGrid, setCursor } from "../utils"
 import { CardConnectionDot } from "./cardConnectionDot"
-import { useUpdate } from "react-three-fiber"
-import { unitSquareGeom } from "./geometries/unitSquare"
 import { useModelStore } from "../store"
-import shallow from "zustand/shallow"
-
-/**
- * @param {number} width
- * @param {number} height
- * @param {number} borderRadius
- * @param {number} bevel
- */
-const makeCardBufferGeometry = (width, height, borderRadius, bevel) =>
-  // prettier-ignore
-  new Float32Array([
-    // Main body
-    0, borderRadius, 0,
-    width, height - borderRadius, 0,
-    0, height - borderRadius, 0,
-    // --
-    0, borderRadius, 0,
-    width, borderRadius, 0,
-    width, height - borderRadius, 0,
-
-    // different bevel levels
-    ...(new Array(bevel).fill(0).flatMap((_, index, arr) => {
-      const prevAngle = index * Math.PI/(2*bevel)
-      const angle = (index + 1) * Math.PI/(2*bevel)
-      
-      return [
-        // bottom
-        borderRadius*(1-Math.cos(prevAngle)), borderRadius*(1-Math.sin(prevAngle)), 0,
-        borderRadius*(1-Math.cos(angle)), borderRadius*(1-Math.sin(angle)), 0,
-        width - borderRadius*(1-Math.cos(prevAngle)), borderRadius*(1-Math.sin(prevAngle)), 0,
-
-        borderRadius*(1-Math.cos(angle)), borderRadius*(1-Math.sin(angle)), 0,
-        width - borderRadius*(1-Math.cos(angle)), borderRadius*(1-Math.sin(angle)), 0,
-        width - borderRadius*(1-Math.cos(prevAngle)), borderRadius*(1-Math.sin(prevAngle)), 0,
-
-        // top
-        borderRadius*(1-Math.cos(angle)), height - borderRadius*(1-Math.sin(angle)), 0,
-        borderRadius*(1-Math.cos(prevAngle)), height - borderRadius*(1-Math.sin(prevAngle)), 0,
-        width - borderRadius*(1-Math.cos(prevAngle)), height - borderRadius*(1-Math.sin(prevAngle)), 0,
-
-        width - borderRadius*(1-Math.cos(angle)), height - borderRadius*(1-Math.sin(angle)), 0,
-        borderRadius*(1-Math.cos(angle)), height - borderRadius*(1-Math.sin(angle)), 0,
-        width - borderRadius*(1-Math.cos(prevAngle)), height - borderRadius*(1-Math.sin(prevAngle)), 0,
-      ]
-    }))
-
-  ])
 
 const Card = React.memo(function CardMemo({ cardId }) {
   const zoom = useZoom()
@@ -103,7 +56,7 @@ const Card = React.memo(function CardMemo({ cardId }) {
           ...card,
           position: positionToGrid([
             memo[0] + mx / pixelDensity,
-            memo[1] - my / pixelDensity,
+            memo[1] + my / pixelDensity,
             card.position[2],
           ]),
         }))
@@ -122,7 +75,7 @@ const Card = React.memo(function CardMemo({ cardId }) {
           ...card,
           position: [
             memo[0] + mx / pixelDensity,
-            memo[1] - my / pixelDensity,
+            memo[1] + my / pixelDensity,
             card.position[2],
           ],
         }))
@@ -132,17 +85,6 @@ const Card = React.memo(function CardMemo({ cardId }) {
     { pointerEvents: true, drag: { threshold: 10 } },
   )
 
-  const geom = React.useMemo(
-    () => makeCardBufferGeometry(card.width, card.height, 10, 4),
-    [card.height, card.width],
-  )
-
-  const ref = useUpdate(
-    self => {
-      self.needsUpdate = true
-    },
-    [geom],
-  )
   const { position, height, cardColor } = useSpring({
     from: {
       cardColor: "#FFFFFF",
@@ -163,58 +105,57 @@ const Card = React.memo(function CardMemo({ cardId }) {
 
   return (
     <>
-      <a.group position={position}>
+      {isDragged && (
+        <rect
+          x={card.position[0]}
+          y={card.position[1]}
+          width={card.width}
+          height={card.height}
+          rx={10}
+          fill="#222"
+          opacity="0.1"
+        />
+      )}
+      <a.g transform={position.interpolate((x, y) => `translate(${x}, ${y})`)}>
         {/* BODY */}
 
-        <mesh {...bind()}>
-          <bufferGeometry>
-            <bufferAttribute
-              ref={ref}
-              attachObject={["attributes", "position"]}
-              count={geom.length / 3}
-              array={geom}
-              itemSize={3}
-            />
-          </bufferGeometry>
-          <a.meshBasicMaterial color={cardColor} />
-        </mesh>
+        <a.rect
+          width={card.width}
+          height={height}
+          fill={cardColor}
+          rx={10}
+          {...bind()}
+        />
 
-        {/* ENTER - LEFT */}
         <CardConnectionDot
           isConnected={connections.some(c => c.to === card.id)}
           variant={card.variant}
-          position-y={height.interpolate(h => h / 2)}
+          cy={height.interpolate(h => h / 2)}
         />
 
-        {/* EXITS - RIGHT */}
         {card.exits.map((exit, index) => (
           <CardConnectionDot
             key={exit.id}
             isConnected={connections.some(c => exit.id === c.from)}
             variant={card.variant}
-            position-x={card.width}
-            position-y={height.interpolate(
+            cx={card.width}
+            cy={height.interpolate(
               h => (h * (1 + index)) / (1 + card.exits.length),
             )}
           />
         ))}
-      </a.group>
-
-      {isDragged && (
-        <mesh
-          position={positionToGrid([card.position[0], card.position[1], -1])}
-          scale-x={card.width}
-          scale-y={card.height}
-          geometry={unitSquareGeom}
-        >
-          <meshBasicMaterial color="#EEE" />
-        </mesh>
-      )}
+      </a.g>
     </>
   )
 })
 
 export const Cards = () => {
   const cardIds = useModelStore(s => s.cards.map(c => c.id), shallow)
-  return cardIds.map(cardId => <Card key={cardId} cardId={cardId} />)
+  return (
+    <g id="cards">
+      {cardIds.map(cardId => (
+        <Card key={cardId} cardId={cardId} />
+      ))}
+    </g>
+  )
 }

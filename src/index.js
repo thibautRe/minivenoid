@@ -1,14 +1,13 @@
 // @ts-check
 import React from "react"
 import ReactDOM from "react-dom"
-import { Canvas } from "react-three-fiber"
-import { useSpring } from "react-spring/three"
+// import { Canvas } from "react-three-fiber"
+import { useSpring } from "react-spring"
 import { useGesture } from "react-use-gesture"
 
 import { ViewProvider } from "./three/view"
 import { Cards } from "./three/card"
 import { Connections } from "./three/connections"
-import { Camera } from "./three/camera"
 import {
   getCanvasPosition,
   getModelBoundingBox,
@@ -56,9 +55,10 @@ const App = () => {
         const pixelDensity = getPixelDensityForZoom(zoom.getValue())
 
         setCamera({
-          position: movement.map(
-            (m, i) => (m / pixelDensity) * deltaModeMultiplier + memo[i],
-          ),
+          position: [
+            (movement[0] / pixelDensity) * deltaModeMultiplier + memo[0],
+            -(movement[1] / pixelDensity) * deltaModeMultiplier + memo[1],
+          ],
         })
 
         return memo
@@ -143,13 +143,14 @@ const App = () => {
 
   return (
     <div ref={domTarget}>
-      <Canvas invalidateFrameloop>
+      <svg
+        viewBox={`0 0 ${document.documentElement.clientWidth} ${document.documentElement.clientHeight}`}
+      >
         <ViewProvider zoom={zoom} position={position}>
-          <Camera />
           <Connections />
           <Cards />
         </ViewProvider>
-      </Canvas>
+      </svg>
     </div>
   )
 }
