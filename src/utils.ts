@@ -1,17 +1,16 @@
-/**
- * Returns the pixel density for a given zoom level
- * @param {number} zoom
- */
-export const getPixelDensityForZoom = zoom => Math.exp(zoom)
+import { Card, Coord } from "./types"
 
 /**
- *
- * @param {[number, number]} camPos Current camera position
- * @param {number} camZoom Current camera zoom level
- * @param {[number, number]} mousePos X and Y coordinate of the mouse (usually event.clientX and event.clientY)
- * @param {[number, number]} canvasSize width and height of the canvas
+ * Returns the pixel density for a given zoom level
  */
-export const getCanvasPosition = (camPos, camZoom, mousePos, canvasSize) => {
+export const getPixelDensityForZoom = (zoom: number) => Math.exp(zoom)
+
+export const getCanvasPosition = (
+  camPos: Coord,
+  camZoom: number,
+  mousePos: Coord,
+  canvasSize: Coord,
+) => {
   const [camX, camY] = camPos
   const [clientX, clientY] = mousePos
   const [width, height] = canvasSize
@@ -23,7 +22,7 @@ export const getCanvasPosition = (camPos, camZoom, mousePos, canvasSize) => {
 /**
  * Returns a Bounding Box based on a collection of cards
  */
-export const getModelBoundingBox = cards => {
+export const getModelBoundingBox = (cards: Card[]) => {
   const minX = cards.reduce(
     (acc, card) => Math.min(acc, card.position[0]),
     Infinity,
@@ -45,15 +44,18 @@ export const getModelBoundingBox = cards => {
 
 /**
  * Sets the global cursor type
- * @param {string} [cursor]
  */
-export const setCursor = cursor => {
+export const setCursor = (cursor?: string) => {
   if (cursor) {
     document.documentElement.style.cursor = cursor
   } else {
+    // @ts-expect-error
     document.documentElement.style.cursor = null
   }
 }
 
-const pToGrid = p => Math.round(p / 50) * 50
-export const positionToGrid = pos => [pToGrid(pos[0]), pToGrid(pos[1]), pos[2]]
+const pToGrid = (p: number) => Math.round(p / 50) * 50
+export const positionToGrid = (pos: Coord): Coord => [
+  pToGrid(pos[0]),
+  pToGrid(pos[1]),
+]

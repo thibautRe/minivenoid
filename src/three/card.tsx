@@ -1,6 +1,5 @@
 // @ts-check
 import React from "react"
-import { a, useSpring, config } from "react-spring"
 import { useGesture } from "react-use-gesture"
 import shallow from "zustand/shallow"
 
@@ -9,27 +8,25 @@ import { getPixelDensityForZoom, positionToGrid, setCursor } from "../utils"
 import { CardConnectionDot } from "./cardConnectionDot"
 import { useModelStore } from "../store"
 
-const Card = React.memo(function CardMemo({ cardId }) {
+interface CardProps {
+  cardIndex: number
+}
+const Card = React.memo(function CardMemo({ cardIndex }: CardProps) {
   const zoom = useZoom()
-  const [isHovered, setIsHovered] = React.useState(false)
-  const [isDragged, setIsDragged] = React.useState(false)
 
   const [card, connections, setCard] = useModelStore(
-    React.useCallback(
-      s => [s.cards.find(c => c.id === cardId), s.connections, s.setCard],
-      [cardId],
-    ),
+    React.useCallback(s => [s.cards[cardIndex], s.connections, s.setCard], [
+      cardIndex,
+    ]),
     shallow,
   )
+
+  const cardId = card.id
+
   const bind = useGesture(
     {
-      onPointerEnter: () => {
-        setIsHovered(true)
-      },
-      onPointerLeave: () => {
-        setIsHovered(false)
-      },
       // DEBUG
+      // @ts-expect-error events
       onClick: ({ event: { ctrlKey, altKey } }) => {
         if (ctrlKey) {
           setCard(cardId, c => ({ ...c, height: 20 + Math.random() * 400 }))
@@ -45,23 +42,20 @@ const Card = React.memo(function CardMemo({ cardId }) {
       },
       onDragStart: () => {
         setCursor("grabbing")
-        setIsDragged(true)
       },
       onDragEnd: ({ movement: [mx, my], memo }) => {
         setCursor()
-        setIsDragged(false)
         if (!memo) return
-        const pixelDensity = getPixelDensityForZoom(zoom.getValue())
+        const pixelDensity = getPixelDensityForZoom(zoom.get())
         setCard(card.id, card => ({
           ...card,
           position: positionToGrid([
             memo[0] + mx / pixelDensity,
             memo[1] + my / pixelDensity,
-            card.position[2],
           ]),
         }))
       },
-      onDrag: ({ buttons, intentional, movement: [mx, my], memo }) => {
+      onDrag: ({ buttons, movement: [mx, my], memo }) => {
         // Only allow left-click drags
         if (buttons !== 1) {
           return
@@ -70,59 +64,27 @@ const Card = React.memo(function CardMemo({ cardId }) {
         if (!memo) {
           memo = card.position
         }
-        const pixelDensity = getPixelDensityForZoom(zoom.getValue())
+        const pixelDensity = getPixelDensityForZoom(zoom.get())
         setCard(card.id, card => ({
           ...card,
-          position: [
-            memo[0] + mx / pixelDensity,
-            memo[1] + my / pixelDensity,
-            card.position[2],
-          ],
+          position: [memo[0] + mx / pixelDensity, memo[1] + my / pixelDensity],
         }))
         return memo
       },
     },
+    // @ts-expect-error
     { pointerEvents: true, drag: { threshold: 10 } },
   )
 
-  const { position, height, cardColor } = useSpring({
-    from: {
-      cardColor: "#FFFFFF",
-    },
-    to: {
-      height: card.height,
-      position: card.position,
-      cardColor: isHovered
-        ? card.variant === "solution"
-          ? "#993d4a"
-          : "#515466"
-        : card.variant === "solution"
-        ? "#7f333e"
-        : "#3d3f4c",
-    },
-    config: config.stiff,
-  })
-
   return (
     <>
-      {isDragged && (
-        <rect
-          x={card.position[0]}
-          y={card.position[1]}
-          width={card.width}
-          height={card.height}
-          rx={10}
-          fill="#222"
-          opacity="0.1"
-        />
-      )}
-      <a.g transform={position.interpolate((x, y) => `translate(${x}, ${y})`)}>
+      <g transform={`translate(${card.position[0]}, ${card.position[1]})`}>
         {/* BODY */}
 
-        <a.rect
+        <rect
           width={card.width}
-          height={height}
-          fill={cardColor}
+          height={card.height}
+          fill={card.variant === "solution" ? "#7f333e" : "#3d3f4c"}
           rx={10}
           {...bind()}
         />
@@ -130,7 +92,7 @@ const Card = React.memo(function CardMemo({ cardId }) {
         <CardConnectionDot
           isConnected={connections.some(c => c.to === card.id)}
           variant={card.variant}
-          cy={height.interpolate(h => h / 2)}
+          cy={card.height / 2}
         />
 
         {card.exits.map((exit, index) => (
@@ -139,12 +101,10 @@ const Card = React.memo(function CardMemo({ cardId }) {
             isConnected={connections.some(c => exit.id === c.from)}
             variant={card.variant}
             cx={card.width}
-            cy={height.interpolate(
-              h => (h * (1 + index)) / (1 + card.exits.length),
-            )}
+            cy={(card.height * (1 + index)) / (1 + card.exits.length)}
           />
         ))}
-      </a.g>
+      </g>
     </>
   )
 })
@@ -153,8 +113,8 @@ export const Cards = () => {
   const cardIds = useModelStore(s => s.cards.map(c => c.id), shallow)
   return (
     <g id="cards">
-      {cardIds.map(cardId => (
-        <Card key={cardId} cardId={cardId} />
+      {cardIds.map((cardId, cardIndex) => (
+        <Card key={cardId} cardIndex={cardIndex} />
       ))}
     </g>
   )

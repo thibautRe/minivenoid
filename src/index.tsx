@@ -16,9 +16,10 @@ import {
 import { useModelStore } from "./store"
 
 import "./index.css"
+import { Coord } from "./types"
 
 const App = () => {
-  const domTarget = React.useRef(null)
+  const domTarget = React.useRef<SVGSVGElement>(null)
   const addCard = useModelStore(s => s.addCard)
 
   const [{ zoom, position }, setCamera] = useSpring(() => {
@@ -26,7 +27,10 @@ const App = () => {
     return {
       from: { zoom: -4 },
       to: {
-        position: [(bbox.maxX + bbox.minX) / 2, -(bbox.maxY + bbox.minY) / 2],
+        position: [
+          (bbox.maxX + bbox.minX) / 2,
+          -(bbox.maxY + bbox.minY) / 2,
+        ] as Coord,
         zoom: -Math.log(
           Math.max(
             (bbox.maxY - bbox.minY + 200) /
@@ -49,10 +53,10 @@ const App = () => {
 
         // Initialize the memo
         if (!memo) {
-          memo = position.getValue()
+          memo = position.get()
         }
 
-        const pixelDensity = getPixelDensityForZoom(zoom.getValue())
+        const pixelDensity = getPixelDensityForZoom(zoom.get())
 
         setCamera({
           position: [
@@ -70,8 +74,8 @@ const App = () => {
         if (!memo) {
           memo = {
             delta,
-            initZoom: zoom.getValue(),
-            initPos: position.getValue(),
+            initZoom: zoom.get(),
+            initPos: position.get(),
           }
         }
         const z = memo.initZoom + delta - memo.delta
@@ -79,7 +83,7 @@ const App = () => {
 
         // // Scroll towards where the mouse is located
         // const { width, height } = domTarget.current.getBoundingClientRect()
-        // const [tx, ty] = getCanvasPosition(position.getValue(), z, origin, [
+        // const [tx, ty] = getCanvasPosition(position.get(), z, origin, [
         //   width,
         //   height,
         // ])
@@ -101,18 +105,19 @@ const App = () => {
 
         // Initialize the memo
         if (!memo) {
-          memo = position.getValue()
+          memo = position.get()
         }
 
-        const pixelDensity = getPixelDensityForZoom(zoom.getValue())
+        const pixelDensity = getPixelDensityForZoom(zoom.get())
 
         setCamera({
-          position: movement.map((m, i) => m * pixelDensity + memo[i]),
+          position: movement.map((m, i) => m * pixelDensity + memo[i]) as Coord,
         })
         return memo
       },
       // Add a card
-      onDblClick: ({ event: { clientX, clientY, ctrlKey } }) => {
+      // @ts-expect-error clientX, Y and ctrlKey
+      onDoubleClick: ({ event: { clientX, clientY, ctrlKey } }) => {
         if (ctrlKey) {
           const s = useModelStore.getState()
           console.log(
@@ -123,17 +128,18 @@ const App = () => {
             ),
           )
         }
+        if (!domTarget.current) return
         const { width, height } = domTarget.current.getBoundingClientRect()
         const [cx, cy] = getCanvasPosition(
-          position.getValue(),
-          zoom.getValue(),
+          position.get(),
+          zoom.get(),
           [clientX, clientY],
           [width, height],
         )
         addCard({
           height: 200,
           width: 120,
-          position: [cx - 60, cy - 100, Math.random() * 1e-10],
+          position: [cx - 60, cy - 100],
           exits: [],
         })
       },
@@ -142,16 +148,15 @@ const App = () => {
   )
 
   return (
-    <div ref={domTarget}>
-      <svg
-        viewBox={`0 0 ${document.documentElement.clientWidth} ${document.documentElement.clientHeight}`}
-      >
-        <ViewProvider zoom={zoom} position={position}>
-          <Connections />
-          <Cards />
-        </ViewProvider>
-      </svg>
-    </div>
+    <svg
+      ref={domTarget}
+      viewBox={`0 0 ${document.documentElement.clientWidth} ${document.documentElement.clientHeight}`}
+    >
+      <ViewProvider zoom={zoom} position={position}>
+        <Connections />
+        <Cards />
+      </ViewProvider>
+    </svg>
   )
 }
 
