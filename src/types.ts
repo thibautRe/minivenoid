@@ -22,3 +22,8 @@ export interface Connection {
   from: CardExitId
   to: CardId
 }
+
+export interface Model {
+  cards: Card[]
+  connections: Connection[]
+}

@@ -1,27 +1,30 @@
 // @ts-check
 import React from "react"
 import { useGesture } from "react-use-gesture"
-import shallow from "zustand/shallow"
 
 import { useZoom } from "./view"
 import { getPixelDensityForZoom, positionToGrid, setCursor } from "../utils"
 import { CardConnectionDot } from "./cardConnectionDot"
-import { useModelStore } from "../store"
+import { useModel } from "../providers/ModelProvider"
+import { Card } from "../types"
 
 interface CardProps {
-  cardIndex: number
+  card: Card
+  onChangeCard: (id: Card["id"], setter: (card: Card) => Card) => void
 }
-const Card = React.memo(function CardMemo({ cardIndex }: CardProps) {
+const CardComponent = React.memo(function CardMemo({
+  card,
+  onChangeCard,
+}: CardProps) {
   const zoom = useZoom()
 
-  const [card, connections, setCard] = useModelStore(
-    React.useCallback(s => [s.cards[cardIndex], s.connections, s.setCard], [
-      cardIndex,
-    ]),
-    shallow,
-  )
-
-  const cardId = card.id
+  const setPartialCard = (
+    getPartial: Partial<Card> | ((card: Card) => Partial<Card>),
+  ) =>
+    onChangeCard(card.id, c => ({
+      ...c,
+      ...(typeof getPartial === "function" ? getPartial(c) : getPartial),
+    }))
 
   const bind = useGesture(
     {
@@ -29,13 +32,12 @@ const Card = React.memo(function CardMemo({ cardIndex }: CardProps) {
       // @ts-expect-error events
       onClick: ({ event: { ctrlKey, altKey } }) => {
         if (ctrlKey) {
-          setCard(cardId, c => ({ ...c, height: 20 + Math.random() * 400 }))
+          setPartialCard({ height: 20 + Math.random() * 400 })
           return
         }
 
         if (altKey) {
-          setCard(cardId, c => ({
-            ...c,
+          setPartialCard(c => ({
             variant: c.variant === "solution" ? undefined : "solution",
           }))
         }
@@ -47,13 +49,12 @@ const Card = React.memo(function CardMemo({ cardIndex }: CardProps) {
         setCursor()
         if (!memo) return
         const pixelDensity = getPixelDensityForZoom(zoom.get())
-        setCard(card.id, card => ({
-          ...card,
+        setPartialCard({
           position: positionToGrid([
             memo[0] + mx / pixelDensity,
             memo[1] + my / pixelDensity,
           ]),
-        }))
+        })
       },
       onDrag: ({ buttons, movement: [mx, my], memo }) => {
         // Only allow left-click drags
@@ -65,10 +66,9 @@ const Card = React.memo(function CardMemo({ cardIndex }: CardProps) {
           memo = card.position
         }
         const pixelDensity = getPixelDensityForZoom(zoom.get())
-        setCard(card.id, card => ({
-          ...card,
+        setPartialCard({
           position: [memo[0] + mx / pixelDensity, memo[1] + my / pixelDensity],
-        }))
+        })
         return memo
       },
     },
@@ -90,7 +90,8 @@ const Card = React.memo(function CardMemo({ cardIndex }: CardProps) {
         />
 
         <CardConnectionDot
-          isConnected={connections.some(c => c.to === card.id)}
+          // isConnected={connections.some(c => c.to === card.id)}
+          isConnected={true}
           variant={card.variant}
           cy={card.height / 2}
         />
@@ -98,7 +99,8 @@ const Card = React.memo(function CardMemo({ cardIndex }: CardProps) {
         {card.exits.map((exit, index) => (
           <CardConnectionDot
             key={exit.id}
-            isConnected={connections.some(c => exit.id === c.from)}
+            // isConnected={connections.some(c => exit.id === c.from)}
+            isConnected={true}
             variant={card.variant}
             cx={card.width}
             cy={(card.height * (1 + index)) / (1 + card.exits.length)}
@@ -110,11 +112,11 @@ const Card = React.memo(function CardMemo({ cardIndex }: CardProps) {
 })
 
 export const Cards = () => {
-  const cardIds = useModelStore(s => s.cards.map(c => c.id), shallow)
+  const { cardMap, setCard } = useModel()
   return (
     <g id="cards">
-      {cardIds.map((cardId, cardIndex) => (
-        <Card key={cardId} cardIndex={cardIndex} />
+      {Array.from(cardMap.values()).map(card => (
+        <CardComponent key={card.id} card={card} onChangeCard={setCard} />
       ))}
     </g>
   )

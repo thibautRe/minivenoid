@@ -1,6 +1,4 @@
-// @ts-check
-import create from "zustand"
-import { Card, Connection } from "./types"
+import { Card, Connection, Model } from "./types"
 import { positionToGrid } from "./utils"
 
 const newId = function <TBrand = unknown>() {
@@ -44,7 +42,7 @@ const generateModel = (amt: number, amtConn: number) => {
   return { cards, connections }
 }
 
-const loadModel = () => {
+const loadModel = (): Model => {
   const urlParams = new URLSearchParams(window.location.search)
   if (urlParams.get("model") === "1") {
     return require("./models/1.json")
@@ -54,33 +52,4 @@ const loadModel = () => {
   }
 }
 
-const model = loadModel()
-
-type ModelStore = {
-  cards: Card[]
-  connections: Connection[]
-  setCard: (id: string, action: (card: Card) => Card) => void
-  addCard: (card: Omit<Card, "id">) => void
-}
-
-export const useModelStore = create<ModelStore>((set, get) => ({
-  cards: model.cards,
-  connections: model.connections,
-  setCard: (id, action) => {
-    set(state => {
-      const cardIndex = state.cards.findIndex(c => c.id === id)
-      return {
-        cards: [
-          ...state.cards.slice(0, cardIndex),
-          action(state.cards[cardIndex]),
-          ...state.cards.slice(cardIndex + 1),
-        ],
-      }
-    })
-  },
-  addCard: card => {
-    set(state => ({ cards: [...state.cards, { id: newId(), ...card }] }))
-  },
-  set,
-  get,
-}))
+export const model = loadModel()

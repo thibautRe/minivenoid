@@ -1,31 +1,18 @@
 import React from "react"
-import shallow from "zustand/shallow"
+import { useModel } from "../providers/ModelProvider"
 
-import { useModelStore } from "../store"
-import { Coord } from "../types"
+import { Card, Connection, Coord } from "../types"
 
-interface ConnectionProps {
-  connectionIndex: number
+interface Props {
+  connection: Connection
+  fromCard: Card
+  toCard: Card
 }
-const Connection = React.memo(function Connection({
-  connectionIndex,
-}: ConnectionProps) {
-  const connection = useModelStore(
-    React.useCallback(s => s.connections[connectionIndex], [connectionIndex]),
-  )
-
-  const fromCard = useModelStore(
-    React.useCallback(
-      s => s.cards.find(c => c.exits.some(e => e.id === connection.from))!,
-      [connection.from],
-    ),
-  )
-  const toCard = useModelStore(
-    React.useCallback(s => s.cards.find(c => c.id === connection.to)!, [
-      connection.to,
-    ]),
-  )
-
+const ConnectionComponent = React.memo(function ConnectionComponent({
+  connection,
+  fromCard,
+  toCard,
+}: Props) {
   const exitIndex = fromCard.exits.findIndex(e => e.id === connection.from)
   const f: Coord = [
     fromCard.position[0] + fromCard.width,
@@ -50,16 +37,22 @@ const Connection = React.memo(function Connection({
 })
 
 export const Connections = () => {
-  // Mapped picks for performance
-  const connectionIds = useModelStore(
-    s => s.connections.map(c => c.id),
-    shallow,
-  )
+  const { connectionMap, cardMap, cardFromExitMap } = useModel()
 
   return (
     <g id="connections">
-      {connectionIds.map((connId, connIndex) => {
-        return <Connection key={connId} connectionIndex={connIndex} />
+      {Array.from(connectionMap.values()).map(connection => {
+        const from = cardFromExitMap.get(connection.from)
+        const to = cardMap.get(connection.to)
+        if (!from || !to) return null
+        return (
+          <ConnectionComponent
+            key={connection.id}
+            connection={connection}
+            fromCard={from}
+            toCard={to}
+          />
+        )
       })}
     </g>
   )

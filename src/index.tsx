@@ -13,17 +13,18 @@ import {
   getModelBoundingBox,
   getPixelDensityForZoom,
 } from "./utils"
-import { useModelStore } from "./store"
+import { model as initModel } from "./store"
 
 import "./index.css"
 import { Coord } from "./types"
+import { ModelProvider, useModel } from "./providers/ModelProvider"
 
 const App = () => {
   const domTarget = React.useRef<SVGSVGElement>(null)
-  const addCard = useModelStore(s => s.addCard)
+  const { cardMap } = useModel()
 
   const [{ zoom, position }, setCamera] = useSpring(() => {
-    const bbox = getModelBoundingBox(useModelStore.getState().cards)
+    const bbox = getModelBoundingBox(Array.from(cardMap.values()))
     return {
       from: { zoom: -4 },
       to: {
@@ -118,16 +119,6 @@ const App = () => {
       // Add a card
       // @ts-expect-error clientX, Y and ctrlKey
       onDoubleClick: ({ event: { clientX, clientY, ctrlKey } }) => {
-        if (ctrlKey) {
-          const s = useModelStore.getState()
-          console.log(
-            JSON.stringify(
-              { cards: s.cards, connections: s.connections },
-              null,
-              2,
-            ),
-          )
-        }
         if (!domTarget.current) return
         const { width, height } = domTarget.current.getBoundingClientRect()
         const [cx, cy] = getCanvasPosition(
@@ -136,12 +127,13 @@ const App = () => {
           [clientX, clientY],
           [width, height],
         )
-        addCard({
-          height: 200,
-          width: 120,
-          position: [cx - 60, cy - 100],
-          exits: [],
-        })
+        // RE-TODO
+        // addCard({
+        //   height: 200,
+        //   width: 120,
+        //   position: [cx - 60, cy - 100],
+        //   exits: [],
+        // })
       },
     },
     { domTarget, eventOptions: { passive: false } },
@@ -160,4 +152,19 @@ const App = () => {
   )
 }
 
-ReactDOM.render(<App />, document.getElementById("root"))
+const WithModel: React.FC = ({ children }) => {
+  const [model, setModel] = React.useState(initModel)
+
+  return (
+    <ModelProvider model={model} onSetModel={setModel}>
+      {children}
+    </ModelProvider>
+  )
+}
+
+ReactDOM.render(
+  <WithModel>
+    <App />
+  </WithModel>,
+  document.getElementById("root"),
+)
