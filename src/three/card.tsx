@@ -2,11 +2,11 @@
 import React from "react"
 import { useGesture } from "react-use-gesture"
 
-import { useZoom } from "./view"
 import { getPixelDensityForZoom, positionToGrid, setCursor } from "../utils"
 import { CardConnectionDot } from "./cardConnectionDot"
 import { useModel } from "../providers/ModelProvider"
 import { Card } from "../types"
+import { useCameraRef } from "../providers/CameraProvider"
 
 interface CardProps {
   card: Card
@@ -16,7 +16,7 @@ const CardComponent = React.memo(function CardMemo({
   card,
   onChangeCard,
 }: CardProps) {
-  const zoom = useZoom()
+  const cameraRef = useCameraRef()
 
   const setPartialCard = (
     getPartial: Partial<Card> | ((card: Card) => Partial<Card>),
@@ -48,7 +48,9 @@ const CardComponent = React.memo(function CardMemo({
       onDragEnd: ({ movement: [mx, my], memo }) => {
         setCursor()
         if (!memo) return
-        const pixelDensity = getPixelDensityForZoom(zoom.get())
+        const pixelDensity = getPixelDensityForZoom(
+          cameraRef.current?.zoom ?? 0,
+        )
         setPartialCard({
           position: positionToGrid([
             memo[0] + mx / pixelDensity,
@@ -65,7 +67,9 @@ const CardComponent = React.memo(function CardMemo({
         if (!memo) {
           memo = card.position
         }
-        const pixelDensity = getPixelDensityForZoom(zoom.get())
+        const pixelDensity = getPixelDensityForZoom(
+          cameraRef.current?.zoom ?? 0,
+        )
         setPartialCard({
           position: [memo[0] + mx / pixelDensity, memo[1] + my / pixelDensity],
         })

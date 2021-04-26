@@ -1,48 +1,47 @@
 // @ts-check
 import React from "react"
 import ReactDOM from "react-dom"
-// import { Canvas } from "react-three-fiber"
-import { useSpring } from "react-spring"
 import { useGesture } from "react-use-gesture"
 
-import { ViewProvider } from "./three/view"
+import { CameraComponent } from "./three/cameraComponent"
 import { Cards } from "./three/card"
 import { Connections } from "./three/connections"
-import {
-  getCanvasPosition,
-  getModelBoundingBox,
-  getPixelDensityForZoom,
-} from "./utils"
+import { getModelBoundingBox, getPixelDensityForZoom } from "./utils"
 import { model as initModel } from "./store"
 
 import "./index.css"
 import { Coord } from "./types"
 import { ModelProvider, useModel } from "./providers/ModelProvider"
+import {
+  CameraProvider,
+  useCameraRef,
+  useCameraSetState,
+} from "./providers/CameraProvider"
 
 const App = () => {
+  const cameraRef = useCameraRef()
+  const setCamera = useCameraSetState()
+
   const domTarget = React.useRef<SVGSVGElement>(null)
   const { cardMap } = useModel()
 
-  const [{ zoom, position }, setCamera] = useSpring(() => {
+  React.useEffect(() => {
     const bbox = getModelBoundingBox(Array.from(cardMap.values()))
-    return {
-      from: { zoom: -4 },
-      to: {
-        position: [
-          (bbox.maxX + bbox.minX) / 2,
-          -(bbox.maxY + bbox.minY) / 2,
-        ] as Coord,
-        zoom: -Math.log(
-          Math.max(
-            (bbox.maxY - bbox.minY + 200) /
-              document.documentElement.clientHeight,
-            (bbox.maxX - bbox.minX + 200) /
-              document.documentElement.clientWidth,
-          ),
+    setCamera({
+      position: [
+        (bbox.maxX + bbox.minX) / 2,
+        -(bbox.maxY + bbox.minY) / 2,
+      ] as Coord,
+      zoom: -Math.log(
+        Math.max(
+          (bbox.maxY - bbox.minY + 200) / document.documentElement.clientHeight,
+          (bbox.maxX - bbox.minX + 200) / document.documentElement.clientWidth,
         ),
-      },
-    }
-  })
+      ),
+    })
+    // Init effect, do not run when the model changes
+    // eslint-disable-next-line
+  }, [])
 
   useGesture(
     {
@@ -54,12 +53,13 @@ const App = () => {
 
         // Initialize the memo
         if (!memo) {
-          memo = position.get()
+          memo = cameraRef.current?.position
         }
 
-        const pixelDensity = getPixelDensityForZoom(zoom.get())
+        const pixelDensity = getPixelDensityForZoom(cameraRef.current!.zoom)
 
         setCamera({
+          ...cameraRef.current!,
           position: [
             (movement[0] / pixelDensity) * deltaModeMultiplier + memo[0],
             -(movement[1] / pixelDensity) * deltaModeMultiplier + memo[1],
@@ -75,12 +75,12 @@ const App = () => {
         if (!memo) {
           memo = {
             delta,
-            initZoom: zoom.get(),
-            initPos: position.get(),
+            initZoom: cameraRef.current!.zoom,
+            initPos: cameraRef.current!.position,
           }
         }
         const z = memo.initZoom + delta - memo.delta
-        setCamera({ zoom: z })
+        setCamera({ ...cameraRef.current!, zoom: z })
 
         // // Scroll towards where the mouse is located
         // const { width, height } = domTarget.current.getBoundingClientRect()
@@ -106,12 +106,13 @@ const App = () => {
 
         // Initialize the memo
         if (!memo) {
-          memo = position.get()
+          memo = cameraRef.current!.position
         }
 
-        const pixelDensity = getPixelDensityForZoom(zoom.get())
+        const pixelDensity = getPixelDensityForZoom(cameraRef.current!.zoom)
 
         setCamera({
+          ...cameraRef.current!,
           position: movement.map((m, i) => m * pixelDensity + memo[i]) as Coord,
         })
         return memo
@@ -119,14 +120,14 @@ const App = () => {
       // Add a card
       // @ts-expect-error clientX, Y and ctrlKey
       onDoubleClick: ({ event: { clientX, clientY, ctrlKey } }) => {
-        if (!domTarget.current) return
-        const { width, height } = domTarget.current.getBoundingClientRect()
-        const [cx, cy] = getCanvasPosition(
-          position.get(),
-          zoom.get(),
-          [clientX, clientY],
-          [width, height],
-        )
+        // if (!domTarget.current) return
+        // const { width, height } = domTarget.current.getBoundingClientRect()
+        // const [cx, cy] = getCanvasPosition(
+        //   position,
+        //   zoom,
+        //   [clientX, clientY],
+        //   [width, height],
+        // )
         // RE-TODO
         // addCard({
         //   height: 200,
@@ -144,10 +145,10 @@ const App = () => {
       ref={domTarget}
       viewBox={`0 0 ${document.documentElement.clientWidth} ${document.documentElement.clientHeight}`}
     >
-      <ViewProvider zoom={zoom} position={position}>
+      <CameraComponent>
         <Connections />
         <Cards />
-      </ViewProvider>
+      </CameraComponent>
     </svg>
   )
 }
@@ -164,7 +165,9 @@ const WithModel: React.FC = ({ children }) => {
 
 ReactDOM.render(
   <WithModel>
-    <App />
+    <CameraProvider>
+      <App />
+    </CameraProvider>
   </WithModel>,
   document.getElementById("root"),
 )

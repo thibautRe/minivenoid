@@ -1,8 +1,4 @@
 import React from "react"
-import { a } from "react-spring"
-
-import { getPixelDensityForZoom } from "../utils"
-import { useZoom } from "./view"
 
 interface CardConnectionDotProps {
   isConnected: boolean
@@ -16,10 +12,9 @@ export const CardConnectionDot = ({
   variant,
   ...props
 }: CardConnectionDotProps) => {
-  const zoom = useZoom()
   return (
-    <a.circle
-      r={zoom.interpolate(z => Math.min(6 / getPixelDensityForZoom(z), 30))}
+    <circle
+      r={10}
       stroke={
         isConnected
           ? variant === "solution"
