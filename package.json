@@ -10,16 +10,16 @@
     "react": "^16.13.0",
     "react-dom": "^16.13.0",
     "react-scripts": "3.3.0",
-    "react-spring": "^8.0.27",
-    "react-three-fiber": "^4.0.0",
-    "react-use-gesture": "^6.0.14",
-    "three": "^0.115.0"
+    "react-spring": "^9.0.0-rc.3",
+    "react-use-gesture": "^8.0.0",
+    "typescript": "^4.1.2"
   },
   "scripts": {
     "predeploy": "npm run build",
     "deploy": "gh-pages -d build",
     "start": "react-scripts start",
     "build": "react-scripts build",
+    "serve": "mv build minivenoid && python -m SimpleHTTPServer",
     "test": "react-scripts test",
     "eject": "react-scripts eject"
   },
