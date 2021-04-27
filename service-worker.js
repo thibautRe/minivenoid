@@ -14,7 +14,7 @@
 importScripts("https://storage.googleapis.com/workbox-cdn/releases/4.3.1/workbox-sw.js");
 
 importScripts(
-  "/minivenoid/precache-manifest.e97f662656c08bbe9fe3685491f64db3.js"
+  "/minivenoid/precache-manifest.c05aedfbb120b0989dbb24a1b54ae38b.js"
 );
 
 self.addEventListener('message', (event) => {

@@ -1,22 +1,22 @@
 {
   "files": {
-    "main.css": "/minivenoid/static/css/main.c2fc85b5.chunk.css",
-    "main.js": "/minivenoid/static/js/main.e1499869.chunk.js",
-    "main.js.map": "/minivenoid/static/js/main.e1499869.chunk.js.map",
+    "main.css": "/minivenoid/static/css/main.43e7f79d.chunk.css",
+    "main.js": "/minivenoid/static/js/main.7dc7b8f6.chunk.js",
+    "main.js.map": "/minivenoid/static/js/main.7dc7b8f6.chunk.js.map",
     "runtime-main.js": "/minivenoid/static/js/runtime-main.8678bc03.js",
     "runtime-main.js.map": "/minivenoid/static/js/runtime-main.8678bc03.js.map",
-    "static/js/2.507fd40f.chunk.js": "/minivenoid/static/js/2.507fd40f.chunk.js",
-    "static/js/2.507fd40f.chunk.js.map": "/minivenoid/static/js/2.507fd40f.chunk.js.map",
+    "static/js/2.be81cf43.chunk.js": "/minivenoid/static/js/2.be81cf43.chunk.js",
+    "static/js/2.be81cf43.chunk.js.map": "/minivenoid/static/js/2.be81cf43.chunk.js.map",
     "index.html": "/minivenoid/index.html",
-    "precache-manifest.e97f662656c08bbe9fe3685491f64db3.js": "/minivenoid/precache-manifest.e97f662656c08bbe9fe3685491f64db3.js",
+    "precache-manifest.c05aedfbb120b0989dbb24a1b54ae38b.js": "/minivenoid/precache-manifest.c05aedfbb120b0989dbb24a1b54ae38b.js",
     "service-worker.js": "/minivenoid/service-worker.js",
-    "static/css/main.c2fc85b5.chunk.css.map": "/minivenoid/static/css/main.c2fc85b5.chunk.css.map",
-    "static/js/2.507fd40f.chunk.js.LICENSE": "/minivenoid/static/js/2.507fd40f.chunk.js.LICENSE"
+    "static/css/main.43e7f79d.chunk.css.map": "/minivenoid/static/css/main.43e7f79d.chunk.css.map",
+    "static/js/2.be81cf43.chunk.js.LICENSE": "/minivenoid/static/js/2.be81cf43.chunk.js.LICENSE"
   },
   "entrypoints": [
     "static/js/runtime-main.8678bc03.js",
-    "static/js/2.507fd40f.chunk.js",
-    "static/css/main.c2fc85b5.chunk.css",
-    "static/js/main.e1499869.chunk.js"
+    "static/js/2.be81cf43.chunk.js",
+    "static/css/main.43e7f79d.chunk.css",
+    "static/js/main.7dc7b8f6.chunk.js"
   ]
 }
