@@ -7,25 +7,29 @@ const newId = function <TBrand = unknown>() {
   }
 }
 
+const baseTextSplit = `Spicy jalapeno bacon ipsum dolor amet dolore shoulder spare ribs enim tenderloin jerky. Doner enim beef ribs incididunt laboris t-bone ea dolore consectetur turducken short loin. Ut short loin bacon excepteur id ham hock flank culpa brisket. Swine velit cupidatat, qui leberkas ad andouille lorem hamburger labore pancetta sunt in fatback tri-tip. Lorem porchetta minim cupim. Fatback pork chop beef, qui culpa ham ullamco.`.split(
+  " ",
+)
+
+export const genText = () =>
+  baseTextSplit
+    .filter(() => Math.random() < 0.2)
+    .sort(() => Math.random() - 0.5)
+    .join(" ")
+
 /**
  * Generates a parametric model
  */
-const generateModel = (amt: number, amtConn: number) => {
+const generateModel = (amt: number, amtConn: number): Model => {
   const cards = new Array(amt).fill(null).map<Card>((_, i) => ({
     id: newId(),
     position: positionToGrid([
       (0.5 - Math.random()) * Math.sqrt(amt) * 1000,
       (0.5 - Math.random()) * Math.sqrt(amt) * 1000,
     ]),
-    height: Math.round((0.5 + Math.random()) * 200),
-    width: 120,
-    variant: Math.random() > 0.8 ? "solution" : undefined,
-    exits: new Array(Math.floor(Math.random() * 4)).fill(null).map(_ => ({
-      id: newId(),
-    })),
+    type: Math.random() > 0.8 ? "solution" : "problem",
+    text: genText(),
   }))
-
-  const allExits = cards.flatMap(c => c.exits)
 
   const connections = new Array(Math.round(amtConn))
     .fill(0)
@@ -33,8 +37,7 @@ const generateModel = (amt: number, amtConn: number) => {
       return {
         id: newId(),
         from:
-          allExits[Math.max(0, Math.floor(Math.random() * allExits.length - 1))]
-            .id,
+          cards[Math.max(0, Math.floor(Math.random() * cards.length - 1))].id,
         to: cards[Math.max(0, Math.floor(Math.random() * cards.length - 1))].id,
       }
     })

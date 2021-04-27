@@ -1,16 +1,14 @@
 import React from "react"
-import { Card, CardExit, Connection, Model } from "../types"
+import { Card, Connection, Model } from "../types"
 
 type ModelContext = {
   cardMap: Map<Card["id"], Card>
   connectionMap: Map<Connection["id"], Connection>
-  cardFromExitMap: Map<CardExit["id"], Card>
   setCard: (id: Card["id"], setter: (card: Card) => Card) => void
 }
 const ModelContext = React.createContext<ModelContext>({
   cardMap: new Map(),
   connectionMap: new Map(),
-  cardFromExitMap: new Map(),
   setCard: () => {
     throw new Error("Uninitialized context: Cannot set card")
   },
@@ -33,10 +31,6 @@ export const ModelProvider: React.FC<Props> = ({
     () => new Map(model.connections.map(c => [c.id, c])),
     [model.connections],
   )
-  const cardFromExitMap = React.useMemo(
-    () => new Map(model.cards.flatMap(c => c.exits.map(e => [e.id, c]))),
-    [model.cards],
-  )
   // const connectionsForCard = React.useMemo(
   //   () => new Map(model.connections.map(conn => [conn.id])),
   //   [model.cards],
@@ -51,10 +45,11 @@ export const ModelProvider: React.FC<Props> = ({
   )
   return (
     <ModelContext.Provider
-      value={React.useMemo(
-        () => ({ cardMap, connectionMap, cardFromExitMap, setCard }),
-        [cardMap, connectionMap, cardFromExitMap, setCard],
-      )}
+      value={React.useMemo(() => ({ cardMap, connectionMap, setCard }), [
+        cardMap,
+        connectionMap,
+        setCard,
+      ])}
     >
       {children}
     </ModelContext.Provider>

@@ -133,7 +133,6 @@ const App = () => {
         //   height: 200,
         //   width: 120,
         //   position: [cx - 60, cy - 100],
-        //   exits: [],
         // })
       },
     },
@@ -143,6 +142,7 @@ const App = () => {
   return (
     <svg
       ref={domTarget}
+      style={{ userSelect: "none" }}
       viewBox={`0 0 ${document.documentElement.clientWidth} ${document.documentElement.clientHeight}`}
     >
       <CameraComponent>

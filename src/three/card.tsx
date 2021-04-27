@@ -7,6 +7,8 @@ import { CardConnectionDot } from "./cardConnectionDot"
 import { useModel } from "../providers/ModelProvider"
 import { Card } from "../types"
 import { useCameraRef } from "../providers/CameraProvider"
+import { FOResizer } from "./FOResizer"
+import { genText } from "../store"
 
 interface CardProps {
   card: Card
@@ -28,18 +30,10 @@ const CardComponent = React.memo(function CardMemo({
 
   const bind = useGesture(
     {
-      // DEBUG
-      // @ts-expect-error events
-      onClick: ({ event: { ctrlKey, altKey } }) => {
-        if (ctrlKey) {
-          setPartialCard({ height: 20 + Math.random() * 400 })
-          return
-        }
-
+      // @ts-expect-error
+      onClick: ({ event: { altKey } }) => {
         if (altKey) {
-          setPartialCard(c => ({
-            variant: c.variant === "solution" ? undefined : "solution",
-          }))
+          setPartialCard({ text: genText() })
         }
       },
       onDragStart: () => {
@@ -67,9 +61,7 @@ const CardComponent = React.memo(function CardMemo({
         if (!memo) {
           memo = card.position
         }
-        const pixelDensity = getPixelDensityForZoom(
-          cameraRef.current?.zoom ?? 0,
-        )
+        const pixelDensity = getPixelDensityForZoom(cameraRef.current!.zoom)
         setPartialCard({
           position: [memo[0] + mx / pixelDensity, memo[1] + my / pixelDensity],
         })
@@ -85,31 +77,43 @@ const CardComponent = React.memo(function CardMemo({
       <g transform={`translate(${card.position[0]}, ${card.position[1]})`}>
         {/* BODY */}
 
-        <rect
-          width={card.width}
-          height={card.height}
-          fill={card.variant === "solution" ? "#7f333e" : "#3d3f4c"}
-          rx={10}
-          {...bind()}
-        />
+        <FOResizer {...bind()}>
+          <div>
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                padding: 16,
+                width: 160,
+                borderRadius: 16,
+                boxSizing: "border-box",
+                backgroundColor:
+                  card.type === "solution" ? "#7f333e" : "#3d3f4c",
+                color: "white",
+              }}
+            >
+              <strong>
+                {card.type === "solution" ? "Solution" : "Problem"}
+              </strong>
+              <div style={{ height: 8 }} />
+              <span>{card.text}</span>
+            </div>
+          </div>
+        </FOResizer>
 
         <CardConnectionDot
           // isConnected={connections.some(c => c.to === card.id)}
           isConnected={true}
-          variant={card.variant}
-          cy={card.height / 2}
+          isSolution={card.type === "solution"}
+          cx={-160 / 2}
         />
 
-        {card.exits.map((exit, index) => (
-          <CardConnectionDot
-            key={exit.id}
-            // isConnected={connections.some(c => exit.id === c.from)}
-            isConnected={true}
-            variant={card.variant}
-            cx={card.width}
-            cy={(card.height * (1 + index)) / (1 + card.exits.length)}
-          />
-        ))}
+        <CardConnectionDot
+          // isConnected={connections.some(c => exit.id === c.from)}
+          isConnected={true}
+          isSolution={card.type === "solution"}
+          cx={160 / 2}
+        />
       </g>
     </>
   )

@@ -1,25 +1,28 @@
 export type Coord = [number, number]
 
 type CardId = string & { __brand: "CardId" }
-type CardExitId = string & { __brand: "CardExitId" }
 type ConnectionId = string & { __brand: "ConnectionId" }
 
-export interface Card {
+interface CardBase {
   id: CardId
   position: Coord
-  height: number // TODO remove
-  width: number // TODO remove
-  variant?: "solution"
-  exits: CardExit[]
 }
 
-export interface CardExit {
-  id: CardExitId
+export interface CardProblem extends CardBase {
+  type: "problem"
+  text: string
 }
+
+export interface CardSolution extends CardBase {
+  type: "solution"
+  text: string
+}
+
+export type Card = CardProblem | CardSolution
 
 export interface Connection {
   id: ConnectionId
-  from: CardExitId
+  from: CardId
   to: CardId
 }
 

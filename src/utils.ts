@@ -28,7 +28,7 @@ export const getModelBoundingBox = (cards: Card[]) => {
     Infinity,
   )
   const maxX = cards.reduce(
-    (acc, card) => Math.max(acc, card.position[0] + card.width),
+    (acc, card) => Math.max(acc, card.position[0]),
     -Infinity,
   )
   const minY = cards.reduce(
@@ -36,7 +36,7 @@ export const getModelBoundingBox = (cards: Card[]) => {
     Infinity,
   )
   const maxY = cards.reduce(
-    (acc, card) => Math.max(acc, card.position[1] + card.height),
+    (acc, card) => Math.max(acc, card.position[1]),
     -Infinity,
   )
   return { minX, maxX, minY, maxY }
