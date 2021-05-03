@@ -1,4 +1,4 @@
-import { Card, Coord } from "./types"
+import { Card, Coordinate, Dimensions } from "./types"
 
 /**
  * Returns the pixel density for a given zoom level
@@ -6,10 +6,10 @@ import { Card, Coord } from "./types"
 export const getPixelDensityForZoom = (zoom: number) => Math.exp(zoom)
 
 export const getCanvasPosition = (
-  camPos: Coord,
+  camPos: Coordinate,
   camZoom: number,
-  mousePos: Coord,
-  canvasSize: Coord,
+  mousePos: Coordinate,
+  canvasSize: Dimensions,
 ) => {
   const [camX, camY] = camPos
   const [clientX, clientY] = mousePos
@@ -55,7 +55,7 @@ export const setCursor = (cursor?: string) => {
 }
 
 const pToGrid = (p: number) => Math.round(p / 50) * 50
-export const positionToGrid = (pos: Coord): Coord => [
+export const positionToGrid = (pos: Coordinate): Coordinate => [
   pToGrid(pos[0]),
   pToGrid(pos[1]),
 ]

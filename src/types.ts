@@ -1,11 +1,13 @@
-export type Coord = [number, number]
+export type Coordinate = [number, number]
+
+export type Dimensions = [number, number]
 
 type CardId = string & { __brand: "CardId" }
 type ConnectionId = string & { __brand: "ConnectionId" }
 
 interface CardBase {
   id: CardId
-  position: Coord
+  position: Coordinate
 }
 
 export interface CardProblem extends CardBase {

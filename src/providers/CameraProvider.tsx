@@ -1,9 +1,9 @@
 import React from "react"
-import { Coord } from "../types"
+import { Coordinate } from "../types"
 
 interface Camera {
   zoom: number
-  position: Coord
+  position: Coordinate
 }
 
 const initCamera: Camera = { zoom: 0, position: [0, 0] }

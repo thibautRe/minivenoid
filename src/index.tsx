@@ -10,7 +10,7 @@ import { getModelBoundingBox, getPixelDensityForZoom } from "./utils"
 import { model as initModel } from "./store"
 
 import "./index.css"
-import { Coord } from "./types"
+import { Coordinate } from "./types"
 import { ModelProvider, useModel } from "./providers/ModelProvider"
 import {
   CameraProvider,
@@ -31,7 +31,7 @@ const App = () => {
       position: [
         (bbox.maxX + bbox.minX) / 2,
         -(bbox.maxY + bbox.minY) / 2,
-      ] as Coord,
+      ] as Coordinate,
       zoom: -Math.log(
         Math.max(
           (bbox.maxY - bbox.minY + 200) / document.documentElement.clientHeight,
@@ -113,7 +113,9 @@ const App = () => {
 
         setCamera({
           ...cameraRef.current!,
-          position: movement.map((m, i) => m * pixelDensity + memo[i]) as Coord,
+          position: movement.map(
+            (m, i) => m * pixelDensity + memo[i],
+          ) as Coordinate,
         })
         return memo
       },
