@@ -1,7 +1,7 @@
 import React from "react"
 import { useModel } from "../providers/ModelProvider"
 
-import { Card, Connection, Coord } from "../types"
+import { Card, Connection, Coordinate } from "../types"
 
 interface Props {
   connection: Connection
@@ -13,8 +13,8 @@ const ConnectionComponent = React.memo(function ConnectionComponent({
   fromCard,
   toCard,
 }: Props) {
-  const f: Coord = [fromCard.position[0] + 160 / 2, fromCard.position[1]]
-  const t: Coord = [toCard.position[0] - 160 / 2, toCard.position[1]]
+  const f: Coordinate = [fromCard.position[0] + 160 / 2, fromCard.position[1]]
+  const t: Coordinate = [toCard.position[0] - 160 / 2, toCard.position[1]]
   const halfXDist = Math.abs((t[0] - f[0]) / 2)
   const bezierX = Math.max(50, halfXDist)
 

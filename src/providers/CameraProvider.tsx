@@ -1,19 +1,17 @@
 import React from "react"
-import { Coord } from "../types"
+import { Coordinate } from "../types"
 
 interface Camera {
   zoom: number
-  position: Coord
+  position: Coordinate
 }
 
 const initCamera: Camera = { zoom: 0, position: [0, 0] }
 interface CameraRefContext {
   cameraRef: React.RefObject<Camera>
 }
-const CameraStateContext = React.createContext<Camera>({
-  zoom: 0,
-  position: [0, 0],
-})
+const CameraStateContext = React.createContext(initCamera)
+
 const CameraSetStateContext = React.createContext<(c: Camera) => void>(() => {
   throw new Error("Cannot set camera")
 })

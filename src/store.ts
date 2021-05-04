@@ -31,16 +31,13 @@ const generateModel = (amt: number, amtConn: number): Model => {
     text: genText(),
   }))
 
-  const connections = new Array(Math.round(amtConn))
-    .fill(0)
-    .map<Connection>(() => {
-      return {
-        id: newId(),
-        from:
-          cards[Math.max(0, Math.floor(Math.random() * cards.length - 1))].id,
-        to: cards[Math.max(0, Math.floor(Math.random() * cards.length - 1))].id,
-      }
-    })
+  const connections = new Array(amtConn).fill(null).map<Connection>(() => {
+    return {
+      id: newId(),
+      from: cards[Math.max(0, Math.floor(Math.random() * cards.length - 1))].id,
+      to: cards[Math.max(0, Math.floor(Math.random() * cards.length - 1))].id,
+    }
+  })
 
   return { cards, connections }
 }
@@ -51,7 +48,7 @@ const loadModel = (): Model => {
     return require("./models/1.json")
   } else {
     const amt = parseInt(urlParams.get("amt") ?? "") || 50
-    return generateModel(amt, amt * 0.8)
+    return generateModel(amt, Math.round(amt * 0.8))
   }
 }
 
