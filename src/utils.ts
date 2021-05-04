@@ -23,23 +23,22 @@ export const getCanvasPosition = (
  * Returns a Bounding Box based on a collection of cards
  */
 export const getModelBoundingBox = (cards: Card[]) => {
-  const minX = cards.reduce(
-    (acc, card) => Math.min(acc, card.position[0]),
-    Infinity,
+  return cards.reduce(
+    (acc, card) => {
+      return {
+        minX: Math.min(acc.minX, card.position[0]),
+        maxX: Math.max(acc.maxX, card.position[0]),
+        minY: Math.min(acc.minY, card.position[1]),
+        maxY: Math.max(acc.maxY, card.position[1]),
+      }
+    },
+    {
+      minX: Infinity,
+      maxX: -Infinity,
+      minY: Infinity,
+      maxY: -Infinity,
+    },
   )
-  const maxX = cards.reduce(
-    (acc, card) => Math.max(acc, card.position[0]),
-    -Infinity,
-  )
-  const minY = cards.reduce(
-    (acc, card) => Math.min(acc, card.position[1]),
-    Infinity,
-  )
-  const maxY = cards.reduce(
-    (acc, card) => Math.max(acc, card.position[1]),
-    -Infinity,
-  )
-  return { minX, maxX, minY, maxY }
 }
 
 /**
